@@ -1,0 +1,57 @@
+/* --- Header & Stats --- */
+header {
+    text-align: center;
+    margin: 1rem 0;
+    z-index: 10;
+    flex-shrink: 0;
+    /* Prevent header from shrinking */
+}
+
+header h1 {
+    font-size: 2rem;
+    font-weight: 400;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.stats {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.money-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.money-display {
+    border: 2px solid var(--ink-black);
+    padding: 0.25rem 1rem;
+    border-radius: 20px 5px 25px 5px;
+    font-size: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+    background: transparent;
+    margin: 0.5rem 0;
+}
+
+.money-rate {
+    font-size: 0.8rem;
+    color: var(--ink-gray);
+    opacity: 0.7;
+    letter-spacing: 0.02em;
+    margin-top: 0.1rem;
+}
+
+header p {
+    color: var(--ink-gray);
+    font-size: 1rem;
+}
