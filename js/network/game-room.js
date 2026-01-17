@@ -211,6 +211,7 @@ const GameRoom = {
             const playerId = player.id;
             state.players = state.players.filter(p => p.peerId !== peerId);
             Lobby.update();
+            Lobby.clearRemoteCursor(playerId);
 
             // Notify other players
             if (this.isHost) {

@@ -136,8 +136,7 @@ const Protocol = {
         Lobby.update();
 
         // Remove their cursor
-        const cursor = document.getElementById('cursor-' + playerId);
-        if (cursor) cursor.remove();
+        Lobby.clearRemoteCursor(playerId);
     },
 
     handlePlayerList(data) {

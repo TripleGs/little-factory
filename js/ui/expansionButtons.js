@@ -68,6 +68,9 @@ function expandGrid(type) {
         setupGrid(true); // Re-render preserving data
         spawnFloatingText(0, 0, "Expanded!");
         // 0,0 usually safe, or maybe center? But dimensions changed so careful.
+        if (state.gameMode === 'multi' && typeof Lobby !== 'undefined') {
+            Lobby.restoreRemoteCursors();
+        }
     } else {
         // Show error somewhere?
         const cx = Math.floor(state.cols / 2);

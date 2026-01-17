@@ -4,6 +4,8 @@ const Lobby = {
     emoteReady: false,
     emoteTimers: new Map(),
     emoteDurationMs: 2800,
+    cursorTrackingReady: false,
+    remoteCursorPositions: new Map(),
     emoteIcons: {
         'thumbs-up': 'fa-thumbs-up',
         'face-laugh': 'fa-face-laugh',
@@ -192,21 +194,10 @@ const Lobby = {
     },
 
     setupCursorTracking() {
-        // Create cursor container
-        let cursorContainer = document.getElementById('cursor-container');
-        if (!cursorContainer) {
-            cursorContainer = document.createElement('div');
-            cursorContainer.id = 'cursor-container';
-            cursorContainer.style.position = 'absolute';
-            cursorContainer.style.top = '0';
-            cursorContainer.style.left = '0';
-            cursorContainer.style.width = '100%';
-            cursorContainer.style.height = '100%';
-            cursorContainer.style.pointerEvents = 'none';
-            cursorContainer.style.overflow = 'hidden';
-            els.grid.appendChild(cursorContainer);
-        }
+        this.ensureCursorContainer();
+        if (this.cursorTrackingReady) return;
 
+        // Create cursor container
         // Track local cursor and broadcast
         els.grid.addEventListener('mousemove', (e) => {
             if (state.gameMode !== 'multi') return;
@@ -224,10 +215,29 @@ const Lobby = {
                 }
             });
         });
+
+        this.cursorTrackingReady = true;
+    },
+
+    ensureCursorContainer() {
+        let cursorContainer = document.getElementById('cursor-container');
+        if (!cursorContainer) {
+            cursorContainer = document.createElement('div');
+            cursorContainer.id = 'cursor-container';
+            cursorContainer.style.position = 'absolute';
+            cursorContainer.style.top = '0';
+            cursorContainer.style.left = '0';
+            cursorContainer.style.width = '100%';
+            cursorContainer.style.height = '100%';
+            cursorContainer.style.pointerEvents = 'none';
+            cursorContainer.style.overflow = 'hidden';
+            els.grid.appendChild(cursorContainer);
+        }
+        return cursorContainer;
     },
 
     updateRemoteCursor(playerId, x, y) {
-        const cursorContainer = document.getElementById('cursor-container');
+        const cursorContainer = this.ensureCursorContainer();
         if (!cursorContainer) return;
 
         let cursor = document.getElementById('cursor-' + playerId);
@@ -268,6 +278,17 @@ const Lobby = {
 
         cursor.style.left = x + 'px';
         cursor.style.top = y + 'px';
+
+        this.remoteCursorPositions.set(playerId, { x, y });
+    },
+
+    restoreRemoteCursors() {
+        if (state.gameMode !== 'multi') return;
+
+        this.ensureCursorContainer();
+        this.remoteCursorPositions.forEach((pos, playerId) => {
+            this.updateRemoteCursor(playerId, pos.x, pos.y);
+        });
     },
 
     updateMultiplayerUI() {
@@ -383,6 +404,14 @@ const Lobby = {
         }
 
         this.scheduleEmoteClear(playerId, emote, false);
+    },
+
+    clearRemoteCursor(playerId) {
+        this.remoteCursorPositions.delete(playerId);
+        const cursor = document.getElementById('cursor-' + playerId);
+        if (cursor) {
+            cursor.remove();
+        }
     },
 
     setupTransferControls() {
@@ -572,5 +601,7 @@ const Lobby = {
 
         this.emoteTimers.forEach((timerId) => clearTimeout(timerId));
         this.emoteTimers.clear();
+        this.remoteCursorPositions.clear();
+        this.cursorTrackingReady = false;
     }
 };
