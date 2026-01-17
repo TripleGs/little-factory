@@ -1,0 +1,49 @@
+/* Stopper */
+.stopper {
+    background: transparent;
+    z-index: 20;
+}
+
+.stopper::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    left: -50%;
+    right: -50%;
+    background: repeating-linear-gradient(90deg,
+            transparent, transparent 10px,
+            #6b7280 10px, #6b7280 14px,
+            transparent 14px, transparent 24px);
+    border-top: 2px solid #6b7280;
+    border-bottom: 2px solid #6b7280;
+    z-index: 1;
+    animation: belt-move 2s linear infinite;
+    opacity: 0.6;
+}
+
+.stopper::after {
+    content: '\f256';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 5%;
+    bottom: 5%;
+    left: 20%;
+    right: 20%;
+    background: linear-gradient(to bottom, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%);
+    border: 2px solid #450a0a;
+    border-radius: 4px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--cell-size) * 0.4);
+    color: #dc2626;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stopper.paused::before {
+    animation-play-state: paused;
+}

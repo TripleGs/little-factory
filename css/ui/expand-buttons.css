@@ -1,0 +1,53 @@
+/* Expansion Buttons */
+.expand-btn {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    background: var(--ink-white);
+    border: 2px solid var(--ink-black);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--ink-black);
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+    transition: all 0.2s;
+    z-index: 20;
+}
+
+.expand-btn:hover {
+    background: var(--accent-hover);
+    transform: scale(1.1);
+}
+
+.expand-btn:active {
+    transform: scale(0.95);
+}
+
+.row-btn {
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 40px;
+    height: 30px;
+    border-radius: 5px;
+}
+
+.row-btn:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+
+.col-btn {
+    right: -40px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 40px;
+    border-radius: 5px;
+}
+
+.col-btn:hover {
+    transform: translateY(-50%) scale(1.1);
+}

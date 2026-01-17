@@ -1,0 +1,28 @@
+/* Jumper Pad */
+.jumper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: white;
+    border: 2px solid var(--ink-black);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Double arrow icon */
+.jumper::after {
+    content: "\f102"; /* fa-angles-up */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: calc(var(--cell-size) * 0.5);
+    z-index: 3;
+    color: var(--ink-black);
+}

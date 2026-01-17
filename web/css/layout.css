@@ -1,0 +1,205 @@
+/* --- Layout --- */
+.app-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    /* Allow scrolling at all zoom levels */
+}
+
+.game-main-area {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    gap: 1.5rem;
+    padding: 0 var(--app-padding) var(--app-padding);
+}
+
+.player-sidebar {
+    position: absolute;
+    right: var(--app-padding);
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 5;
+    width: 250px;
+    max-width: 90vw;
+    background: var(--ink-white);
+    border: 2px solid var(--ink-black);
+    border-radius: 12px;
+    padding: 0.9rem;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.sidebar-player-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.sidebar-player {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px dashed var(--line-color);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.02);
+}
+
+.sidebar-player.disconnected {
+    opacity: 0.6;
+}
+
+.sidebar-player-info {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.sidebar-player-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 1px solid var(--ink-black);
+}
+
+.sidebar-player-name {
+    color: var(--ink-black);
+    font-size: 1rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
+}
+
+.sidebar-player-money {
+    color: #b07b00;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.sidebar-empty {
+    color: var(--ink-gray);
+    font-size: 0.95rem;
+    padding: 0.25rem 0.4rem;
+}
+
+.transfer-section {
+    border-top: 2px dashed var(--line-color);
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.transfer-header {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.transfer-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.transfer-select,
+.transfer-input {
+    width: 100%;
+    border: 2px solid var(--ink-black);
+    border-radius: 8px;
+    padding: 0.35rem 0.6rem;
+    background: var(--ink-white);
+    font-family: 'Patrick Hand', cursive;
+    font-size: 0.95rem;
+}
+
+.transfer-amount-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.transfer-btn {
+    border: 2px solid var(--ink-black);
+    border-radius: 8px;
+    background: var(--accent-hover);
+    padding: 0.35rem 0.6rem;
+    cursor: pointer;
+    font-size: 0.95rem;
+}
+
+.transfer-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.emote-section {
+    border-top: 2px dashed var(--line-color);
+    padding-top: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.emote-header {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.emote-buttons {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.4rem;
+}
+
+.emote-btn {
+    border: 2px solid var(--ink-black);
+    border-radius: 8px;
+    background: var(--ink-white);
+    padding: 0.35rem 0;
+    cursor: pointer;
+    font-size: 1.05rem;
+    display: grid;
+    place-items: center;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.emote-btn:hover {
+    transform: translateY(-1px);
+    background: var(--accent-hover);
+}
+
+.emote-btn.active {
+    background: #ffe6a8;
+    box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.2);
+}
+
+.game-wrapper {
+    position: relative;
+    padding: 1rem;
+    border-radius: 5px;
+    background: var(--ink-white);
+    border: 2px solid var(--ink-black);
+    box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
