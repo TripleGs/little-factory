@@ -23,7 +23,7 @@
 }
 
 .stopper::after {
-    content: '\f256';
+    content: '\f061';  /* fa-arrow-right - more prominent directional indicator */
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     position: absolute;
@@ -32,14 +32,15 @@
     left: 20%;
     right: 20%;
     background: linear-gradient(to bottom, #7f1d1d 0%, #991b1b 50%, #7f1d1d 100%);
-    border: 2px solid #450a0a;
+    border: 3px solid #450a0a;
     border-radius: 4px;
     z-index: 15;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: calc(var(--cell-size) * 0.4);
-    color: #dc2626;
+    font-size: calc(var(--cell-size) * 0.5);  /* Increased from 0.4 to 0.5 */
+    color: #fee2e2;  /* Much brighter red - almost white with red tint */
+    text-shadow: 0 0 4px #dc2626, 0 0 8px #dc2626;  /* Glowing effect */
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3),
                 0 2px 4px rgba(0, 0, 0, 0.2);
 }

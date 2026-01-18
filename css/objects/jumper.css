@@ -13,16 +13,12 @@
     justify-content: center;
 }
 
-/* Double arrow icon */
+/* Double arrow icon - now uses right-pointing arrow that will rotate with tile */
 .jumper::after {
-    content: "\f102"; /* fa-angles-up */
+    content: "\f101"; /* fa-angles-right - will rotate with parent */
     font-family: "Font Awesome 6 Free";
     font-weight: 900;
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
     font-size: calc(var(--cell-size) * 0.5);
     z-index: 3;
-    color: var(--ink-black);
+    color: #7c3aed;
 }

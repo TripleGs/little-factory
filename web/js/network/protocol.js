@@ -360,6 +360,9 @@ const Protocol = {
         if (playerId === state.localPlayerId) return;
 
         // Apply the expansion without cost (cost was paid by the player who expanded)
+        // Increment expansion counter so cost scales for everyone
+        state.expansions++;
+
         if (type === 'row') {
             state.rows++;
             const newRow = [];

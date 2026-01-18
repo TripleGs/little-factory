@@ -589,13 +589,24 @@ const Sound = (() => {
         updateVolume();
     }
 
+    // Stop all sounds and cleanup
+    function stopAll() {
+        stopConveyor();
+        comboCount = 0;
+        lastActionTime = 0;
+        if (context && context.state === 'running') {
+            context.suspend();
+        }
+    }
+
     return {
         play,
         unlock,
         setEnabled,
         setMuted,
         setVolume,
-        updateConveyor
+        updateConveyor,
+        stopAll
     };
 })();
 

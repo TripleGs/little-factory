@@ -394,7 +394,10 @@ function createNewProducerButton() {
     btn.className = 'tool-btn';
     btn.style.borderStyle = 'dashed';
 
-    const newProducerCost = COLOR_CONFIG.costs.newProducer;
+    // Scale cost based on number of producer types unlocked: 1000, 2000, 3000, etc.
+    const baseCost = COLOR_CONFIG.costs.newProducer;
+    const producerCount = state.producerTypes.length;
+    const newProducerCost = baseCost * Math.max(1, producerCount);
     const canAfford = state.money >= newProducerCost;
 
     btn.innerHTML = `<i class="fa-solid fa-plus"></i><span class="price-tag">$${newProducerCost}</span>`;

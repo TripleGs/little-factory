@@ -49,10 +49,6 @@ const Lobby = {
                 item.classList.add('disconnected');
             }
 
-            // Connection status indicator
-            const statusDot = document.createElement('div');
-            statusDot.className = 'connection-status ' + (player.connected !== false ? 'connected' : 'disconnected');
-
             const colorDot = document.createElement('div');
             colorDot.className = 'player-color';
             colorDot.style.backgroundColor = player.color;
@@ -61,7 +57,6 @@ const Lobby = {
             name.className = 'player-name';
             name.textContent = player.name;
 
-            item.appendChild(statusDot);
             item.appendChild(colorDot);
             item.appendChild(name);
 
@@ -841,6 +836,11 @@ const Lobby = {
     },
 
     reset() {
+        // Stop all sounds when leaving game
+        if (window.Sound) {
+            Sound.stopAll();
+        }
+
         state.players = [];
         state.gameMode = 'single';
         state.isHost = false;
