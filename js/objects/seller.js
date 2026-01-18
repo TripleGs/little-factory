@@ -2,7 +2,10 @@ function sellItem(x, y, item) {
     // Base sell value of $1, plus 0.5 per mix level
     const sellMultiplier = item.isPackaged ? item.packageCount : 1;
     const mixLevel = item.mixLevel || 0;
-    const totalMoney = (1 + (mixLevel * COLOR_CONFIG.palette.sellValuePerLevel)) * sellMultiplier;
+    // Income multiplier based on producer type order (1st type = x1, 2nd type = x2, 3rd type = x3, etc.)
+    // producerType is the index in the producerTypes array, so add 1 to get the order number
+    const producerTypeOrder = (item.producerType ?? 0) + 1;
+    const totalMoney = (1 + (mixLevel * COLOR_CONFIG.palette.sellValuePerLevel)) * sellMultiplier * producerTypeOrder;
 
     if (state.gameMode === 'multi' && state.players.length > 1) {
         // Split income equally among all players

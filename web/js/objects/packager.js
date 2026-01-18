@@ -78,23 +78,12 @@ function handlePackaging(item, tile) {
     const packKey = `${item.x},${item.y}`;
     if (item.packagedBy.has(packKey)) return; // Already packaged here
 
-    // Check affordabilty
-    if (state.money < 1) {
-        // Not enough money to package
-        return;
-    }
-
     // Mark as packaged at this location
     item.packagedBy.add(packKey);
 
     console.log('Packaging item:', item.id, 'at', packKey);
 
-    // deduct cost
-    state.money -= 1;
-    els.money.innerText = state.money;
-    spawnFloatingText(item.x, item.y, '-$1.0');
-
-    // Transform into a package immediately
+    // Transform into a package immediately (no cost)
     item.isPackaged = true;
     item.packagedItems = [{ ...item }]; // Store original item data
     item.packageCount = 1;

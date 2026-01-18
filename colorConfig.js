@@ -21,7 +21,7 @@ const COLOR_CONFIG = {
             { id: 'blue', name: 'Blue', r: 0, g: 0, b: 255, mixLevel: 0 }
         ],
         itemColor: { r: 5, g: 5, b: 5 }, // Starting color for spawned items (very dark gray, sells for $1)
-        money: 1000  // Starting money
+        money: 200  // Starting money
     },
     costs: {
         belt: 5,
