@@ -1,6 +1,13 @@
 /* --- Interaction & Rendering --- */
 /* --- Input Handling --- */
 function handleInput(x, y) {
+    // Check for pending emote placement first (multiplayer only)
+    if (state.gameMode === 'multi' && typeof Lobby !== 'undefined' && Lobby.pendingEmote) {
+        if (Lobby.handleGridClick(x, y)) {
+            return; // Emote was placed, don't process normal input
+        }
+    }
+
     const tile = state.grid[y][x];
     if (!state.tool) return;
 
@@ -19,6 +26,7 @@ function handleEraser(x, y, tile) {
     // Locked tiles cannot be erased
     if (tile.locked) {
         spawnFloatingText(x, y, "Locked!");
+        Sound.play('error');
         return;
     }
 
@@ -31,6 +39,8 @@ function handleEraser(x, y, tile) {
     // Remove any items at this location
     state.items = state.items.filter(i => i.x !== x || i.y !== y);
 
+    Sound.play('erase');
+
     // Broadcast tile removal in multiplayer
     if (state.gameMode === 'multi') {
         Sync.broadcastTileRemoved(x, y);
@@ -41,18 +51,21 @@ function handlePlacement(x, y, tile) {
     // Validate placement - paint tool requires a color to be selected
     if (state.tool === 'paint' && (!state.subTool || state.toolData.type !== 'colorer')) {
         spawnFloatingText(x, y, "Select a color!");
+        Sound.play('error');
         return;
     }
 
     // Locked tiles cannot be overwritten
     if (tile.locked) {
         spawnFloatingText(x, y, "Locked!");
+        Sound.play('error');
         return;
     }
 
     const cost = getToolCost(state.tool);
     if (cost > state.money) {
         spawnFloatingText(x, y, `Need $${cost}!`);
+        Sound.play('error');
         return;
     }
 
@@ -80,6 +93,7 @@ function handlePlacement(x, y, tile) {
     }
 
     placeTile(tile);
+    Sound.play('place');
 
     // Broadcast tile placement in multiplayer
     if (state.gameMode === 'multi') {
@@ -127,11 +141,11 @@ function setupControls() {
 
     // Mouse move for preview
     els.grid.addEventListener('mousemove', (e) => {
-        if (e.target.classList.contains('cell')) {
-            const x = parseInt(e.target.dataset.x);
-            const y = parseInt(e.target.dataset.y);
-            showPreview(x, y);
-        }
+        const cell = e.target.closest('.cell');
+        if (!cell) return;
+        const x = parseInt(cell.dataset.x);
+        const y = parseInt(cell.dataset.y);
+        showPreview(x, y);
     });
 
     // Mouse leave to clear preview
@@ -215,13 +229,17 @@ function showPreview(x, y) {
             iconEl.innerHTML = producerIcon;
             container.appendChild(iconEl);
 
-            // Arrow rotates
+            // Arrow rotates - same style as belt arrow, centered, default black color
             const arrowEl = document.createElement('div');
             arrowEl.className = 'producer-arrow';
-            arrowEl.innerHTML = '<i class="fa-solid fa-caret-right"></i>';
+            arrowEl.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
+            arrowEl.style.fontSize = '1.5em';
+            arrowEl.style.position = 'absolute';
+            arrowEl.style.zIndex = '100';
+            arrowEl.style.color = 'inherit'; // Use default black
 
-            // Apply rotation to arrow
-            arrowEl.style.transform = `rotate(${state.rotation * 90}deg) translateX(15px)`;
+            // Apply rotation to arrow (centered, no offset)
+            arrowEl.style.transform = `rotate(${state.rotation * 90}deg)`;
             container.appendChild(arrowEl);
 
             preview.appendChild(container);
@@ -229,8 +247,9 @@ function showPreview(x, y) {
             // Don't rotate the preview container itself for producer
             preview.style.transform = 'none';
         } else if (state.toolData.type === 'belt' || state.toolData.type === 'colorer' ||
-                   state.toolData.type === 'packager' || state.toolData.type === 'stopper') {
-            // Belt, colorer, packager, and stopper previews with arrow indicator
+                   state.toolData.type === 'packager' || state.toolData.type === 'stopper' ||
+                   state.toolData.type === 'jumper') {
+            // Belt, colorer, packager, stopper, and jumper previews with arrow indicator
             const container = document.createElement('div');
             container.style.position = 'relative';
             container.style.width = '100%';
@@ -243,14 +262,18 @@ function showPreview(x, y) {
             const arrowEl = document.createElement('div');
             arrowEl.innerHTML = '<i class="fa-solid fa-arrow-right"></i>';
             arrowEl.style.fontSize = '1.5em';
+            arrowEl.style.position = 'relative';
+            arrowEl.style.zIndex = '100';
 
             if (state.toolData.type === 'colorer' && state.subTool) {
                 const c = state.subTool;
                 arrowEl.style.color = `rgb(${c.r}, ${c.g}, ${c.b})`;
             } else if (state.toolData.type === 'packager') {
-                arrowEl.style.color = '#d97706';
+                // Use same color as belt (default black) for visibility
             } else if (state.toolData.type === 'stopper') {
                 arrowEl.style.color = '#dc2626';
+            } else if (state.toolData.type === 'jumper') {
+                arrowEl.style.color = '#7c3aed';
             }
 
             container.appendChild(arrowEl);

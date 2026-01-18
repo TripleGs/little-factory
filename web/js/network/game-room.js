@@ -4,6 +4,9 @@ const GameRoom = {
     roomCode: null,
     isHost: false,
     gameStarted: false,
+    hostPeerId: null,
+    reconnectInProgress: false,
+    rehosting: false,
     pendingJoinRequests: [],
     activeJoinRequest: null,
     joinRequestReady: false,
@@ -48,6 +51,7 @@ const GameRoom = {
 
         this.pendingJoinRequests.push(request);
         this.showNextJoinRequest();
+        Lobby.update();
     },
 
     showNextJoinRequest() {
@@ -82,6 +86,13 @@ const GameRoom = {
             return;
         }
 
+        const conn = peerId ? PeerManager.connections.get(peerId) : null;
+        if (!conn || !conn.open) {
+            this.clearJoinRequestModal();
+            this.showNextJoinRequest();
+            return;
+        }
+
         player.money = this.lateJoinMoney;
         player.connected = true;
         player.isHost = false;
@@ -91,6 +102,7 @@ const GameRoom = {
 
         this.clearJoinRequestModal();
         this.showNextJoinRequest();
+        Lobby.update();
     },
 
     denyJoinRequest() {
@@ -110,6 +122,7 @@ const GameRoom = {
 
         this.clearJoinRequestModal();
         this.showNextJoinRequest();
+        Lobby.update();
     },
 
     // Create a new game room (host)
@@ -124,6 +137,9 @@ const GameRoom = {
         PeerManager.roomCode = this.roomCode;
 
         const playerId = PeerManager.peerId;
+        const startingIcon = (typeof Meta !== 'undefined') ? Meta.getSelectedStartingIcon() : null;
+        this.hostPeerId = playerId;
+        PeerManager.hostPeerId = playerId;
 
         // Set up local state
         state.gameMode = 'multi';
@@ -137,7 +153,8 @@ const GameRoom = {
             money: 0,
             emote: null,
             isHost: true,
-            connected: true
+            connected: true,
+            startingIcon: startingIcon
         }];
 
         return this.roomCode;
@@ -156,6 +173,7 @@ const GameRoom = {
         PeerManager.roomCode = this.roomCode;
 
         const playerId = PeerManager.peerId;
+        const startingIcon = (typeof Meta !== 'undefined') ? Meta.getSelectedStartingIcon() : null;
 
         // Set up local state
         state.gameMode = 'multi';
@@ -164,9 +182,11 @@ const GameRoom = {
 
         // The host's peer ID is predictable: roomCode-host
         const hostPeerId = this.roomCode + '-host';
+        this.hostPeerId = hostPeerId;
+        PeerManager.hostPeerId = hostPeerId;
 
         try {
-            await PeerManager.connectToPeer(hostPeerId);
+            await this.connectToPeerWithRetry(hostPeerId, 6, 1000);
         } catch (err) {
             throw new Error('Could not connect to host. Room may not exist.');
         }
@@ -181,7 +201,8 @@ const GameRoom = {
             money: 0,
             emote: null,
             isHost: false,
-            connected: true
+            connected: true,
+            startingIcon: startingIcon
         }];
 
         // Send join message to host
@@ -195,35 +216,198 @@ const GameRoom = {
         return { isReconnect: false };
     },
 
+    async connectToPeerWithRetry(peerId, attempts, delayMs) {
+        if (PeerManager.connections.has(peerId)) {
+            return PeerManager.connections.get(peerId);
+        }
+
+        const maxAttempts = Math.max(1, attempts || 1);
+        const waitMs = Number.isFinite(delayMs) ? delayMs : 800;
+        let lastError = null;
+
+        for (let attempt = 0; attempt < maxAttempts; attempt++) {
+            try {
+                return await PeerManager.connectToPeer(peerId);
+            } catch (err) {
+                lastError = err;
+                if (attempt < maxAttempts - 1) {
+                    await new Promise(resolve => setTimeout(resolve, waitMs));
+                }
+            }
+        }
+
+        throw lastError || new Error('Connection failed.');
+    },
+
     // Called by PeerManager when a player connects (host only)
     onPlayerConnected(peerId) {
         console.log('Player connected via PeerJS:', peerId);
         // Player will send player_joined message
     },
 
+    handlePlayerDeparture(playerId) {
+        const playerIndex = state.players.findIndex(p => p.id === playerId);
+        if (playerIndex === -1) return { wasHost: false, leavingMoney: 0 };
+
+        const player = state.players[playerIndex];
+        const wasHost = player.isHost;
+        const leavingMoney = Number(player.money) || 0;
+
+        state.players.splice(playerIndex, 1);
+        Lobby.update();
+        Lobby.clearRemoteCursor(playerId);
+
+        if (leavingMoney > 0 && state.players.length > 0) {
+            const share = leavingMoney / state.players.length;
+            state.players.forEach(p => {
+                p.money = (p.money || 0) + share;
+            });
+
+            const localPlayer = state.players.find(p => p.id === state.localPlayerId);
+            if (localPlayer) {
+                state.money = localPlayer.money;
+                if (els.money) {
+                    els.money.innerText = Math.floor(state.money);
+                }
+                spawnFloatingText(Math.floor(state.cols / 2), Math.floor(state.rows / 2), `Inherited $${share.toFixed(1)}`);
+            }
+
+            Lobby.refreshMoneyDisplay();
+            if (state.gameMode === 'multi') {
+                Sync.broadcastMoneyUpdate();
+            }
+        }
+
+        return { wasHost, leavingMoney };
+    },
+
     // Called by PeerManager when a player disconnects
     onPlayerDisconnected(peerId) {
         console.log('Player disconnected:', peerId);
+        if (this.rehosting) return;
 
-        // Find and mark player as disconnected
-        const player = state.players.find(p => p.peerId === peerId);
-        if (player) {
-            const playerId = player.id;
-            state.players = state.players.filter(p => p.peerId !== peerId);
+        let pendingRemoved = false;
+        if (this.activeJoinRequest && this.activeJoinRequest.peerId === peerId) {
+            this.clearJoinRequestModal();
+            this.showNextJoinRequest();
+            pendingRemoved = true;
+        }
+        if (this.pendingJoinRequests.length > 0) {
+            const nextQueue = this.pendingJoinRequests.filter(req => req.peerId !== peerId);
+            if (nextQueue.length !== this.pendingJoinRequests.length) {
+                pendingRemoved = true;
+            }
+            this.pendingJoinRequests = nextQueue;
+        }
+        if (pendingRemoved) {
             Lobby.update();
+        }
 
-            // Notify other players
+        // Find the disconnected player
+        let leavingPlayer = state.players.find(p => p.peerId === peerId || p.id === peerId);
+        if (!leavingPlayer && peerId === this.hostPeerId) {
+            leavingPlayer = state.players.find(p => p.isHost);
+        }
+        if (leavingPlayer) {
+            const playerId = leavingPlayer.id;
+            const { wasHost } = this.handlePlayerDeparture(playerId);
+
+            // Notify other players (if we're host)
             if (this.isHost) {
+                // Broadcast removal
                 PeerManager.broadcast({
                     type: 'player_left',
                     data: { playerId: playerId }
                 });
+
+                // Broadcast new player list (important so clients remove them)
+                PeerManager.broadcast({
+                    type: 'player_list',
+                    data: { players: state.players }
+                });
+
+                // Broadcast money updates
+                Sync.broadcastMoneyUpdate();
             }
+
+            // If the host left and we're not the host, we'll rely on the host monitor to convert to single player
+        } else if (peerId === this.hostPeerId && !state.isHost) {
+            // Host disconnected - will be handled by host monitor
         }
 
         // Remove their cursor
         const cursor = document.getElementById('cursor-' + peerId);
         if (cursor) cursor.remove();
+    },
+
+    kickPlayer(playerId) {
+        if (!this.isHost || !playerId) return;
+        if (playerId === state.localPlayerId) return;
+
+        const player = state.players.find(p => p.id === playerId);
+        if (!player) return;
+
+        const peerId = player.peerId || player.id;
+        if (peerId) {
+            PeerManager.sendTo(peerId, {
+                type: Protocol.types.PLAYER_KICKED,
+                data: { reason: 'You were removed by the host.' }
+            });
+            const conn = PeerManager.connections.get(peerId);
+            if (conn) {
+                setTimeout(() => conn.close(), 200);
+            }
+        }
+
+        this.handlePlayerDeparture(playerId);
+
+        PeerManager.broadcast({
+            type: 'player_left',
+            data: { playerId: playerId }
+        });
+
+        PeerManager.broadcast({
+            type: 'player_list',
+            data: { players: state.players }
+        });
+    },
+
+    // Convert to single player mode
+    convertToSinglePlayer() {
+        console.log('Converting to single-player mode...');
+        spawnFloatingText(Math.floor(state.cols / 2), Math.floor(state.rows / 2), "Host disconnected - now single player");
+
+        // Clean up multiplayer state
+        PeerManager.destroy();
+
+        // Switch to single player
+        state.gameMode = 'single';
+        state.isHost = false;
+        this.isHost = false;
+        this.hostPeerId = null;
+        this.reconnectInProgress = false;
+
+        // Keep only local player
+        const localPlayer = state.players.find(p => p.id === state.localPlayerId);
+        if (localPlayer) {
+            state.players = [localPlayer];
+        } else {
+            state.players = [];
+        }
+
+        // Hide multiplayer UI
+        const sidebar = document.getElementById('player-sidebar');
+        if (sidebar) {
+            sidebar.classList.add('hidden');
+        }
+
+        // Clear remote cursors
+        const cursorContainer = document.getElementById('cursor-container');
+        if (cursorContainer) {
+            cursorContainer.innerHTML = '';
+        }
+
+        Lobby.update();
     },
 
     // Host adds a new player
@@ -284,6 +468,7 @@ const GameRoom = {
                     producerTypes: state.producerTypes,
                     usedIcons: Array.from(state.usedIcons),
                     selectedProducerType: state.selectedProducerType,
+                    hostSeed: state.hostSeed,
                     unlocks: state.unlocks,
                     unlockedColors: Array.from(state.unlockedColors)
                 }
@@ -315,6 +500,7 @@ const GameRoom = {
                     producerTypes: state.producerTypes,
                     usedIcons: Array.from(state.usedIcons),
                     selectedProducerType: state.selectedProducerType,
+                    hostSeed: state.hostSeed,
                     unlocks: state.unlocks,
                     unlockedColors: Array.from(state.unlockedColors),
                     items: state.items
@@ -339,6 +525,8 @@ const GameRoom = {
         this.roomCode = null;
         this.gameStarted = false;
         this.isHost = false;
+        this.hostPeerId = null;
+        this.reconnectInProgress = false;
         this.pendingJoinRequests = [];
         this.activeJoinRequest = null;
         this.clearJoinRequestModal();

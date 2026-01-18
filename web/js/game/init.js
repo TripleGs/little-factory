@@ -48,7 +48,8 @@ function initGame() {
         delete state._pendingGrid;
     } else if (state.producerTypes.length === 0) {
         // Only initialize producer if not already set (single player or host)
-        unlockNewProducer();
+        const startingIcon = (typeof Meta !== 'undefined') ? Meta.getSelectedStartingIcon() : null;
+        unlockNewProducer(startingIcon);
     }
 
     renderPalette();

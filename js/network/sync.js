@@ -62,6 +62,17 @@ const Sync = {
         });
     },
 
+    // Broadcast grid expansion
+    broadcastGridExpanded(type) {
+        this.broadcast({
+            type: Protocol.types.GRID_EXPANDED,
+            data: {
+                type: type,
+                playerId: state.localPlayerId
+            }
+        });
+    },
+
     // Broadcast unlock updates (tools, colors, producer types)
     broadcastUnlockState(data) {
         this.broadcast({

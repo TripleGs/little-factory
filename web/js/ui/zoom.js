@@ -31,6 +31,9 @@ function applyZoom() {
     // Rebuild the grid with new cell size
     setupGrid(true); // Preserve state
     renderAllCells();
+    if (state.gameMode === 'multi' && typeof Lobby !== 'undefined') {
+        Lobby.restoreRemoteCursors();
+    }
 
     showZoomIndicator();
 }
@@ -100,5 +103,8 @@ function setupWindowResize() {
         state.cellSize = Math.round(baseSize * state.zoomLevel);
         setupGrid(true); // Preserve state when resizing
         renderAllCells();
+        if (state.gameMode === 'multi' && typeof Lobby !== 'undefined') {
+            Lobby.restoreRemoteCursors();
+        }
     });
 }

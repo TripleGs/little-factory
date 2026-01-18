@@ -45,9 +45,29 @@ function createToolButton(tool) {
     const btn = document.createElement('button');
     btn.className = 'tool-btn';
 
-    const cost = getToolCost(tool.id);
-    const canAfford = state.money >= cost;
-    
+    // Determine if this tool should be affordability-checked
+    let shouldCheckAffordability = true;
+    let cost = 0;
+    let canAfford = true;
+
+    if (tool.id === 'belt' || tool.id === 'producer') {
+        // Belt and producer never get grayed out
+        shouldCheckAffordability = false;
+    } else if (tool.id === 'paint') {
+        // Paint only gets affordability checked when locked (not unlocked)
+        if (!state.unlocks.paint) {
+            shouldCheckAffordability = true;
+            cost = getToolCost(tool.id);
+            canAfford = state.money >= cost;
+        } else {
+            shouldCheckAffordability = false;
+        }
+    } else {
+        // Other tools (eraser) use current behavior
+        cost = getToolCost(tool.id);
+        canAfford = state.money >= cost;
+    }
+
     // Check if this is the active tool OR if it's the belt group and the active tool is in the group
     let isActive = state.tool === tool.id;
     if (tool.id === 'belt' && BELT_TOOLS.includes(state.tool)) {
@@ -69,7 +89,11 @@ function createToolButton(tool) {
     btn.innerHTML = `${displayIcon}<span>${tool.name}</span>`;
 
     if (isActive) btn.classList.add('active');
-    updateButtonAffordability(btn, cost, canAfford);
+
+    // Only apply affordability if needed
+    if (shouldCheckAffordability) {
+        updateButtonAffordability(btn, cost, canAfford);
+    }
 
     // Special case: paint button shows selected color
     if (tool.id === 'paint' && state.subTool) {
@@ -170,6 +194,7 @@ function createBeltUnlockButton(unlockKey) {
             els.money.innerText = state.money;
             state.unlocks[unlockKey] = true;
             spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${info.name}!`);
+            Sound.play('unlock');
             renderSubPalette();
             renderPalette();
             if (state.gameMode === 'multi') {
@@ -212,6 +237,7 @@ function createBeltGroupButton(tool) {
 }
 
 function selectBeltTool(tool) {
+    Sound.play('click');
     state.tool = tool.id;
     state.toolData = tool;
 
@@ -282,6 +308,7 @@ function createColorButton(color) {
                 els.money.innerText = state.money;
                 state.unlockedColors.add(color.id);
                 spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${color.name}!`);
+                Sound.play('unlock');
                 renderPalette();
                 if (state.gameMode === 'multi') {
                     const localPlayer = state.players.find(p => p.id === state.localPlayerId);
@@ -383,21 +410,27 @@ function createNewProducerButton() {
     return btn;
 }
 
-function handleNewProducerPurchase(cost) {
+
+function handleNewProducerPurchase(cost, iconClass) {
     if (state.money >= cost) {
         const spot = findEmptyCell();
         if (!spot) {
             const cx = Math.floor(state.cols / 2);
             const cy = Math.floor(state.rows / 2);
             spawnFloatingText(cx, cy, "Map is full can't place sale bin");
+            Sound.play('error');
             return;
         }
 
         state.money -= cost;
         els.money.innerText = state.money;
-        const result = unlockNewProducer();
+        const result = unlockNewProducer(iconClass);
         const newType = result.type;
         spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${newType.name}!`);
+        Sound.play('unlock');
+        if (typeof Achievements !== 'undefined') {
+            Achievements.onProducerPurchased();
+        }
         renderSubPalette();
         renderPalette();
 
@@ -415,10 +448,13 @@ function handleNewProducerPurchase(cost) {
                 sellerPlacement: result.sellerPlacement
             });
         }
+    } else {
+        Sound.play('error');
     }
 }
 
 function selectTool(tool, btnEl) {
+    Sound.play('click');
     // For belt button, preserve current belt tool selection if one exists
     if (tool.id === 'belt' && BELT_TOOLS.includes(state.tool)) {
         // Keep current belt tool selected, just show popup
@@ -450,6 +486,7 @@ function selectTool(tool, btnEl) {
 }
 
 function selectPaintColor(colorObj) {
+    Sound.play('click');
     // Ensure paint tool is selected
     state.tool = 'paint';
     state.subTool = colorObj;
@@ -495,7 +532,7 @@ function createUnlockButton(unlockKey) {
     btn.title = `${info.name} ($${cost})`;
 
     updateButtonAffordability(btn, cost, canAfford);
-    
+
     btn.onclick = () => {
         if (state.money >= cost) {
             state.money -= cost;
@@ -503,6 +540,7 @@ function createUnlockButton(unlockKey) {
             state.unlocks[unlockKey] = true;
 
             spawnFloatingText(state.cols / 2, state.rows / 2, `${info.name}!`);
+            Sound.play('unlock');
             renderPalette();
             if (state.gameMode === 'multi') {
                 const localPlayer = state.players.find(p => p.id === state.localPlayerId);

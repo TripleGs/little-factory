@@ -19,6 +19,9 @@ function tick() {
     spawnItemsFromProducers();
     moveAndProcessAllItems();
     updateMoneyRate();
+    if (window.Sound) {
+        Sound.updateConveyor(state.items.length);
+    }
 }
 
 function updateMoneyRate() {
@@ -27,8 +30,21 @@ function updateMoneyRate() {
     const secondsPerTick = CONFIG.tickRate / 1000;
     const speed = state.speedMultiplier || 1;
     const realSeconds = secondsPerTick / speed;
-    const rate = realSeconds > 0 ? (state.moneyRateEarnings / realSeconds) : 0;
-    state.moneyRate = rate;
-    els.moneyRate.textContent = `$${rate.toFixed(1)}/s`;
+    const currentRate = realSeconds > 0 ? (state.moneyRateEarnings / realSeconds) : 0;
+
+    // Add current rate to history
+    state.moneyRateHistory.push(currentRate);
+
+    // Keep only the last N entries
+    while (state.moneyRateHistory.length > state.moneyRateWindowSize) {
+        state.moneyRateHistory.shift();
+    }
+
+    // Calculate rolling average
+    const sum = state.moneyRateHistory.reduce((a, b) => a + b, 0);
+    const avgRate = state.moneyRateHistory.length > 0 ? sum / state.moneyRateHistory.length : 0;
+
+    state.moneyRate = avgRate;
+    els.moneyRate.textContent = `$${avgRate.toFixed(1)}/s`;
     state.moneyRateEarnings = 0;
 }

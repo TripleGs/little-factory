@@ -18,18 +18,47 @@
         <div class="menu-container">
             <h1 class="menu-title"><i class="fa-solid fa-cube"></i> Little Factory</h1>
             <p class="menu-subtitle">Build. Automate. Profit.</p>
-
             <!-- Main Menu Screen -->
             <div id="menu-main" class="menu-screen active">
+                <div class="menu-buttons">
+                    <button id="btn-play" class="menu-btn primary">
+                        <i class="fa-solid fa-play"></i> Play
+                    </button>
+                    <button id="btn-icon-shop" class="menu-btn secondary">
+                        <i class="fa-solid fa-gem"></i> Icon Shop
+                    </button>
+                    <button id="btn-achievements" class="menu-btn secondary">
+                        <i class="fa-solid fa-trophy"></i> Achievements
+                    </button>
+                </div>
+            </div>
+
+            <!-- Play Screen -->
+            <div id="menu-play" class="menu-screen">
                 <div class="menu-buttons">
                     <button id="btn-single-player" class="menu-btn primary">
                         <i class="fa-solid fa-user"></i> Single Player
                     </button>
-                    <button id="btn-host-game" class="menu-btn secondary">
+                    <button id="btn-multi-player" class="menu-btn secondary">
+                        <i class="fa-solid fa-users"></i> Multiplayer
+                    </button>
+                    <button id="btn-play-back" class="menu-btn back">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Multiplayer Screen -->
+            <div id="menu-multi" class="menu-screen">
+                <div class="menu-buttons">
+                    <button id="btn-host-game" class="menu-btn primary">
                         <i class="fa-solid fa-tower-broadcast"></i> Host Game
                     </button>
                     <button id="btn-join-game" class="menu-btn secondary">
                         <i class="fa-solid fa-right-to-bracket"></i> Join Game
+                    </button>
+                    <button id="btn-multi-back" class="menu-btn back">
+                        <i class="fa-solid fa-arrow-left"></i> Back
                     </button>
                 </div>
             </div>
@@ -112,6 +141,63 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Icon Shop Screen -->
+            <div id="menu-shop" class="menu-screen">
+                <h2 class="menu-section-title"><i class="fa-solid fa-gem"></i> Icon Shop</h2>
+                <div class="menu-meta-bar">
+                    <div class="menu-currency">
+                        <i class="fa-solid fa-gem"></i>
+                        <span id="shop-diamond-count">0</span>
+                    </div>
+                    <div class="menu-starting-icon">
+                        <span class="menu-meta-label">Starting Icon</span>
+                        <span id="starting-icon-display" class="menu-icon-display"></span>
+                    </div>
+                </div>
+
+                <div id="icon-shop-grid" class="icon-shop-grid"></div>
+                <div class="menu-buttons">
+                    <button id="btn-shop-back" class="menu-btn back">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Achievements Screen -->
+            <div id="menu-achievements" class="menu-screen">
+                <h2 class="menu-section-title"><i class="fa-solid fa-trophy"></i> Achievements</h2>
+                <div id="achievement-list" class="achievement-list"></div>
+                <div class="menu-buttons">
+                    <button id="btn-achievements-back" class="menu-btn back">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
+
+            <!-- Settings Screen -->
+            <div id="menu-settings" class="menu-screen">
+                <h2 class="menu-section-title"><i class="fa-solid fa-gear"></i> Settings</h2>
+                <div class="settings-list">
+                    <div class="settings-row">
+                        <div class="settings-label">Mute</div>
+                        <label class="settings-toggle">
+                            <input type="checkbox" id="setting-mute">
+                            <span class="settings-slider"></span>
+                        </label>
+                    </div>
+                    <div class="settings-row">
+                        <div class="settings-label">Volume</div>
+                        <input type="range" id="setting-volume" min="0" max="100" value="60">
+                        <span id="setting-volume-label" class="settings-value">60%</span>
+                    </div>
+                </div>
+                <div class="menu-buttons">
+                    <button id="btn-settings-back" class="menu-btn back">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -126,6 +212,9 @@
                     </div>
                     <div class="money-rate" id="money-rate">$0.0/s</div>
                 </div>
+                <button id="btn-ingame-settings" class="header-btn" title="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
             </div>
             <p>Place producers and belts. Feed the sellers.</p>
         </header>
@@ -133,68 +222,121 @@
         <div class="game-main-area">
             <!-- Player Sidebar (multiplayer only) -->
             <div id="player-sidebar" class="player-sidebar hidden">
-                <div class="sidebar-header">
-                    <i class="fa-solid fa-users"></i> Players
+                <div id="sidebar-room" class="sidebar-room hidden">
+                    <div class="sidebar-room-label">Room Code</div>
+                    <div class="sidebar-room-row">
+                        <span id="sidebar-room-code" class="sidebar-room-code">-----</span>
+                        <button id="btn-copy-code-sidebar" class="copy-btn small"><i
+                                class="fa-solid fa-copy"></i></button>
+                    </div>
                 </div>
-                <div id="sidebar-player-list" class="sidebar-player-list">
-                    <!-- Players added dynamically -->
+
+                <div class="sidebar-section" id="sidebar-players-section">
+                    <div class="section-header">
+                        <div class="sidebar-header">
+                            <i class="fa-solid fa-users"></i> Players
+                        </div>
+                        <button class="section-toggle" type="button" aria-label="Toggle Players">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div id="sidebar-player-list" class="sidebar-player-list">
+                            <!-- Players added dynamically -->
+                        </div>
+                    </div>
                 </div>
-                <div id="transfer-section" class="transfer-section">
-                    <div class="transfer-header">Send Money</div>
-                    <div class="transfer-controls">
-                        <select id="transfer-target" class="transfer-select">
-                            <option value="">Select player...</option>
-                        </select>
-                        <div class="transfer-amount-row">
-                            <input type="number" id="transfer-amount" class="transfer-input" placeholder="$" min="1">
-                            <button id="btn-send-money" class="transfer-btn">
-                                <i class="fa-solid fa-paper-plane"></i>
+                <div id="transfer-section" class="transfer-section sidebar-section">
+                    <div class="section-header">
+                        <div class="transfer-header">Send Money</div>
+                        <button class="section-toggle" type="button" aria-label="Toggle Send Money">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div class="transfer-controls">
+                            <select id="transfer-target" class="transfer-select">
+                                <option value="">Select player...</option>
+                            </select>
+                            <div class="transfer-amount-row">
+                                <input type="number" id="transfer-amount" class="transfer-input" placeholder="$"
+                                    min="1">
+                                <button id="btn-send-money" class="transfer-btn">
+                                    <i class="fa-solid fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="emote-section sidebar-section">
+                    <div class="section-header">
+                        <div class="emote-header">Emote</div>
+                        <button class="section-toggle" type="button" aria-label="Toggle Emote">
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div class="emote-buttons">
+                            <button class="emote-btn" data-emote="thumbs-up" title="Thumbs up">
+                                <i class="fa-solid fa-thumbs-up"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="face-laugh" title="Laugh">
+                                <i class="fa-solid fa-face-laugh"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="heart" title="Love">
+                                <i class="fa-solid fa-heart"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="bolt" title="Wow">
+                                <i class="fa-solid fa-bolt"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="face-angry" title="Angry">
+                                <i class="fa-solid fa-face-angry"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="poo" title="Poop">
+                                <i class="fa-solid fa-poo"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="arrow-up" title="Up">
+                                <i class="fa-solid fa-arrow-up"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="arrow-down" title="Down">
+                                <i class="fa-solid fa-arrow-down"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="arrows-left-right" title="Side to Side">
+                                <i class="fa-solid fa-arrows-left-right"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="face-surprise" title="Surprised">
+                                <i class="fa-solid fa-face-surprise"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="face-grin-squint" title="Goofy">
+                                <i class="fa-solid fa-face-grin-squint"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="skull" title="Skull">
+                                <i class="fa-solid fa-skull"></i>
+                            </button>
+                            <button class="emote-btn" data-emote="" title="Clear">
+                                <i class="fa-solid fa-xmark"></i>
                             </button>
                         </div>
                     </div>
                 </div>
-                <div class="emote-section">
-                    <div class="emote-header">Emote</div>
-                    <div class="emote-buttons">
-                        <button class="emote-btn" data-emote="thumbs-up" title="Thumbs up">
-                            <i class="fa-solid fa-thumbs-up"></i>
+                <div class="chat-section sidebar-section">
+                    <div class="section-header">
+                        <div class="chat-header">Chat</div>
+                        <button class="section-toggle" type="button" aria-label="Toggle Chat">
+                            <i class="fa-solid fa-chevron-down"></i>
                         </button>
-                        <button class="emote-btn" data-emote="face-laugh" title="Laugh">
-                            <i class="fa-solid fa-face-laugh"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="heart" title="Love">
-                            <i class="fa-solid fa-heart"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="bolt" title="Wow">
-                            <i class="fa-solid fa-bolt"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="face-angry" title="Angry">
-                            <i class="fa-solid fa-face-angry"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="poo" title="Poop">
-                            <i class="fa-solid fa-poo"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="arrow-up" title="Up">
-                            <i class="fa-solid fa-arrow-up"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="arrow-down" title="Down">
-                            <i class="fa-solid fa-arrow-down"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="arrows-left-right" title="Side to Side">
-                            <i class="fa-solid fa-arrows-left-right"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="face-surprise" title="Surprised">
-                            <i class="fa-solid fa-face-surprise"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="face-grin-squint" title="Goofy">
-                            <i class="fa-solid fa-face-grin-squint"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="skull" title="Skull">
-                            <i class="fa-solid fa-skull"></i>
-                        </button>
-                        <button class="emote-btn" data-emote="" title="Clear">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
+                    </div>
+                    <div class="section-body">
+                        <div id="chat-messages" class="chat-messages">
+                            <!-- Chat messages added dynamically -->
+                        </div>
+                        <div class="chat-input-row">
+                            <input type="text" id="chat-input" class="chat-input" placeholder="Type a message..."
+                                maxlength="200">
+                            <button id="btn-send-chat" class="chat-send-btn">
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -246,6 +388,9 @@
     <script src="js/core/baseTools.js"></script>
     <script src="js/core/factories.js"></script>
     <script src="js/core/utils.js"></script>
+    <script src="js/core/sound.js"></script>
+    <script src="js/core/meta.js"></script>
+    <script src="js/core/achievements.js"></script>
     <script src="js/core/costs.js"></script>
     <script src="js/core/buttonUtils.js"></script>
     <script src="js/objects/belt.js"></script>
@@ -264,6 +409,7 @@
     <script src="js/ui/palette.js"></script>
     <script src="js/ui/renderCells.js"></script>
     <script src="js/ui/renderItems.js"></script>
+    <script src="js/ui/suggestions.js"></script>
     <script src="js/ui/controls.js"></script>
     <script src="js/game/movement.js"></script>
     <script src="js/game/loop.js"></script>
@@ -273,6 +419,7 @@
     <script src="js/network/game-room.js"></script>
     <script src="js/network/sync.js"></script>
     <script src="js/menu/lobby.js"></script>
+    <script src="js/menu/chat.js"></script>
     <script src="js/menu/menu.js"></script>
     <!-- Init must be last -->
     <script src="js/game/init.js"></script>

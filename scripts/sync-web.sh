@@ -11,6 +11,7 @@ rsync -a --delete \
   "$ROOT_DIR/style.css" \
   "$ROOT_DIR/colorConfig.js" \
   "$ROOT_DIR/colorSystem.js" \
+  "$ROOT_DIR/audio" \
   "$ROOT_DIR/css" \
   "$ROOT_DIR/js" \
   "$WEB_DIR"

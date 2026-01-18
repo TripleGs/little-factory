@@ -4,6 +4,8 @@ let state = {
     money: 0,
     moneyRate: 0,
     moneyRateEarnings: 0,
+    moneyRateHistory: [],  // Rolling history for average calculation
+    moneyRateWindowSize: 5, // Number of ticks to average over
     speedMultiplier: 1.0,
     speedUpgradeCost: 100,
     tool: 'belt',
@@ -49,7 +51,8 @@ let state = {
     gameMode: 'single', // 'single' or 'multi'
     players: [],        // { id, name, money, color, emote }
     localPlayerId: null,
-    isHost: false
+    isHost: false,
+    hostSeed: null
 };
 
 const DX = [1, 0, -1, 0];

@@ -15,6 +15,7 @@ function createExpansionButtons() {
         addRowBtn.style.zIndex = '';
     };
     addRowBtn.onclick = () => {
+        Sound.play('click');
         hideTooltip();
         expandGrid('row');
     };
@@ -36,6 +37,7 @@ function createExpansionButtons() {
         addColBtn.style.zIndex = '';
     };
     addColBtn.onclick = () => {
+        Sound.play('click');
         hideTooltip();
         expandGrid('col');
     };
@@ -49,6 +51,7 @@ function expandGrid(type) {
         state.money -= cost;
         els.money.innerText = state.money;
         state.expansions++;
+        Sound.play('unlock');
 
         if (type === 'row') {
             state.rows++;
@@ -67,11 +70,28 @@ function expandGrid(type) {
 
         setupGrid(true); // Re-render preserving data
         spawnFloatingText(0, 0, "Expanded!");
-        // 0,0 usually safe, or maybe center? But dimensions changed so careful.
+        if (typeof Achievements !== 'undefined') {
+            Achievements.onGridExpanded();
+        }
+
+        // Broadcast expansion to other players in multiplayer
+        if (state.gameMode === 'multi') {
+            const localPlayer = state.players.find(p => p.id === state.localPlayerId);
+            if (localPlayer) {
+                localPlayer.money = state.money;
+            }
+            Sync.broadcastGridExpanded(type);
+            Sync.broadcastMoneyUpdate();
+            if (typeof Lobby !== 'undefined') {
+                Lobby.refreshMoneyDisplay();
+                Lobby.restoreRemoteCursors();
+            }
+        }
     } else {
         // Show error somewhere?
         const cx = Math.floor(state.cols / 2);
         const cy = Math.floor(state.rows / 2);
         spawnFloatingText(cx, cy, `Need $${cost}!`);
+        Sound.play('error');
     }
 }

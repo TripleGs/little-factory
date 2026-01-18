@@ -35,5 +35,9 @@ function sellItem(x, y, item) {
         spawnFloatingText(x, y, `+$${totalMoney.toFixed(1)}`);
     }
 
+    Sound.play('sell');
+    if (typeof Achievements !== 'undefined') {
+        Achievements.onItemSold(state.money);
+    }
     renderPalette(); // Update affordability
 }

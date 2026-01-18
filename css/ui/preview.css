@@ -1,5 +1,15 @@
 /* Preview styling */
 .preview {
     pointer-events: none;
-    opacity: 0.5 !important;
+    opacity: 0.6 !important;
+    z-index: 30;
+}
+
+/* Producer previews should not have opacity on the icon itself */
+.preview.producer {
+    opacity: 1 !important;
+}
+
+.preview.producer i {
+    opacity: 0.85;
 }

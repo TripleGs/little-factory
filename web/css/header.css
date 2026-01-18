@@ -1,19 +1,12 @@
-/* --- Header & Stats --- */
 header {
-    text-align: center;
-    margin: 1rem 0;
-    z-index: 10;
-    flex-shrink: 0;
-    /* Prevent header from shrinking */
-}
-
-header h1 {
-    font-size: 2rem;
-    font-weight: 400;
+    position: relative;
+    width: 100%;
+    padding-right: 3rem;
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
+    text-align: center;
+    gap: 0.35rem;
 }
 
 .stats {
@@ -21,37 +14,48 @@ header h1 {
     align-items: center;
     justify-content: center;
     gap: 0.75rem;
-    flex-wrap: wrap;
 }
 
 .money-stack {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 0.2rem;
 }
 
-.money-display {
-    border: 2px solid var(--ink-black);
-    padding: 0.25rem 1rem;
-    border-radius: 20px 5px 25px 5px;
-    font-size: 1.5rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.1);
+.header-btn {
     background: transparent;
-    margin: 0.5rem 0;
+    border: none;
+    font-size: 1.4rem;
+    /* Slightly larger */
+    color: var(--ink-gray);
+    cursor: pointer;
+    /* Remove padding to make it 'just the icon' if that's what they mean, 
+       but some touch target size is good. I'll keep padding but remove background entirely. */
+    padding: 5px;
+    border-radius: 50%;
+    transition: transform 0.2s ease, color 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 8px;
+    outline: none;
+    /* Ensure no focus border either unless needed for accessibility, but user asked to remove it */
 }
 
-.money-rate {
-    font-size: 0.8rem;
-    color: var(--ink-gray);
-    opacity: 0.7;
-    letter-spacing: 0.02em;
-    margin-top: 0.1rem;
+.header-btn:hover {
+    background: transparent;
+    /* No background on hover */
+    color: var(--ink-black);
+    transform: rotate(30deg) scale(1.1);
 }
 
-header p {
-    color: var(--ink-gray);
-    font-size: 1rem;
+.header-btn:focus {
+    outline: none;
+}
+
+#btn-ingame-settings {
+    position: absolute;
+    top: 1rem;
+    right: var(--app-padding);
 }

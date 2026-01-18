@@ -47,9 +47,16 @@ function createCell(x, y) {
     cell.style.width = `${state.cellSize}px`;
     cell.style.height = `${state.cellSize}px`;
 
-    const interact = () => handleInput(x, y);
+    const interact = (e) => {
+        // Shift+click sends a suggestion instead of placing
+        if (e && e.shiftKey && state.gameMode === 'multi' && typeof Suggestions !== 'undefined') {
+            Suggestions.sendSuggestion(x, y);
+            return;
+        }
+        handleInput(x, y);
+    };
     cell.onmousedown = interact;
-    cell.onmouseenter = (e) => { if (e.buttons === 1) interact(); };
+    cell.onmouseenter = (e) => { if (e.buttons === 1 && !e.shiftKey) interact(e); };
 
     els.grid.appendChild(cell);
 }

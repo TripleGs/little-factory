@@ -10,8 +10,39 @@ function getRandomIcon() {
     return randomIcon;
 }
 
-function unlockNewProducer() {
-    const newIcon = getRandomIcon();
+function markIconUsed(iconClass) {
+    if (!iconClass) return;
+    state.usedIcons.add(iconClass);
+}
+
+function resolveStartingIcon(iconClass) {
+    if (iconClass && COLOR_CONFIG.availableIcons.includes(iconClass)) {
+        return iconClass;
+    }
+    return getRandomIcon();
+}
+
+function shuffleArray(list) {
+    for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+    }
+    return list;
+}
+
+function unlockStartingProducersForPlayers(players) {
+    const eligible = players.filter(player => player.connected !== false);
+    const shuffled = shuffleArray([...eligible]);
+
+    shuffled.forEach(player => {
+        const iconToUse = resolveStartingIcon(player.startingIcon);
+        unlockNewProducer(iconToUse);
+    });
+}
+
+function unlockNewProducer(iconClass) {
+    const newIcon = resolveStartingIcon(iconClass);
+    markIconUsed(newIcon);
     const newType = {
         id: state.producerTypes.length,
         icon: `<i class="${newIcon}"></i>`,
@@ -27,6 +58,15 @@ function unlockNewProducer() {
 }
 
 function spawnLockedSeller(producerTypeId) {
+    for (let y = 0; y < state.rows; y++) {
+        for (let x = 0; x < state.cols; x++) {
+            const tile = state.grid[y][x];
+            if (tile && tile.type === 'seller' && tile.producerType === producerTypeId) {
+                return { x, y, tile };
+            }
+        }
+    }
+
     const spot = findEmptyCell();
     if (!spot) {
         // Grid is full, notify user
@@ -87,8 +127,8 @@ function spawnItem(px, py, list) {
 
     const target = getTile(tx, ty);
     if (!target || (target.type !== 'belt' && target.type !== 'colorer' &&
-                    target.type !== 'jumper' && target.type !== 'packager' &&
-                    target.type !== 'stopper')) return;
+        target.type !== 'jumper' && target.type !== 'packager' &&
+        target.type !== 'stopper')) return;
 
     // Get the producer's type to determine which icon to use
     const producerTile = state.grid[py][px];
@@ -108,6 +148,7 @@ function spawnItem(px, py, list) {
             const newItem = createItem(tx, ty, itemIcon, producerTypeId);
             mergeIntoPackage(existingPackage, newItem);
             spawnFloatingText(tx, ty, `+1 (x${existingPackage.packageCount})`);
+            Sound.play('produce');
             return;
         } else {
             // Type mismatch - can't spawn
@@ -118,4 +159,5 @@ function spawnItem(px, py, list) {
     if (isLocationOccupied(tx, ty, state.items)) return;
 
     list.push(createItem(tx, ty, itemIcon, producerTypeId));
+    Sound.play('produce');
 }

@@ -13,5 +13,8 @@ function applyStopperState(item) {
 }
 
 function markItemStopped(item) {
+    if (!state.stoppedItems.has(item.id)) {
+        Sound.play('stop');
+    }
     state.stoppedItems.set(item.id, { ticksRemaining: 3 });
 }

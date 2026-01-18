@@ -6,6 +6,7 @@ const PeerManager = {
     connections: new Map(), // peerId -> DataConnection
     roomCode: null,
     isHost: false,
+    hostPeerId: null,
 
     // Initialize PeerJS with a specific ID
     async init(peerId) {
@@ -48,12 +49,12 @@ const PeerManager = {
                 }
             });
 
-            // Timeout after 10 seconds
+            // Timeout after 15 seconds
             setTimeout(() => {
                 if (!this.peer.open) {
                     reject(new Error('Connection timeout'));
                 }
-            }, 10000);
+            }, 15000);
         });
     },
 
@@ -91,12 +92,12 @@ const PeerManager = {
                 reject(err);
             });
 
-            // Timeout after 10 seconds
+            // Timeout after 15 seconds
             setTimeout(() => {
                 if (!conn.open) {
                     reject(new Error('Connection timeout'));
                 }
-            }, 10000);
+            }, 15000);
         });
     },
 
@@ -171,7 +172,7 @@ const PeerManager = {
     // Send to host only (for non-hosts)
     sendToHost(message) {
         if (!this.isHost && this.connections.size > 0) {
-            const hostConn = this.connections.values().next().value;
+            const hostConn = this.hostPeerId ? this.connections.get(this.hostPeerId) : this.connections.values().next().value;
             if (hostConn && hostConn.open) {
                 hostConn.send(Protocol.createMessage(message.type, message.data));
             }
@@ -189,6 +190,7 @@ const PeerManager = {
         this.peerId = null;
         this.isHost = false;
         this.roomCode = null;
+        this.hostPeerId = null;
     },
 
     // Get connection count

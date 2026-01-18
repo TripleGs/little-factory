@@ -3,6 +3,7 @@
 
 # Tauri build artifacts
 src-tauri/target/
+src-tauri/gen/
 
 # Generated icons (keep only icon.png source)
 src-tauri/icons/32x32.png

@@ -23,7 +23,5 @@
     pointer-events: none;
     z-index: 6;
     color: var(--ink-black);
-    font-size: 1rem;
-    /* Make sure it's visible on top of the icon */
-    text-shadow: 0 0 2px var(--ink-white);
+    font-size: 1.4rem;
 }

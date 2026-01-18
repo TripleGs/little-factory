@@ -1,4 +1,12 @@
 /* --- Lobby System --- */
+function pickRandomStartingIcon(players) {
+    const icons = players
+        .map(player => player.startingIcon)
+        .filter(Boolean);
+    if (icons.length === 0) return null;
+    return icons[Math.floor(Math.random() * icons.length)];
+}
+
 const Lobby = {
     transferReady: false,
     emoteReady: false,
@@ -6,6 +14,12 @@ const Lobby = {
     emoteDurationMs: 2800,
     cursorTrackingReady: false,
     remoteCursorPositions: new Map(),
+    pendingEmote: null,  // Emote waiting to be placed on grid
+    gridEmotes: [],      // Active emotes displayed on grid
+    roomCodeCopyReady: false,
+    sidebarToggleReady: false,
+    hostMonitorReady: false,
+    hostMonitorTimer: null,
     emoteIcons: {
         'thumbs-up': 'fa-thumbs-up',
         'face-laugh': 'fa-face-laugh',
@@ -66,19 +80,44 @@ const Lobby = {
                 item.appendChild(youBadge);
             }
 
+            if (state.isHost && player.id !== state.localPlayerId) {
+                const kickBtn = document.createElement('button');
+                kickBtn.className = 'player-kick-btn';
+                kickBtn.type = 'button';
+                kickBtn.title = 'Kick player';
+                kickBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                kickBtn.addEventListener('click', () => {
+                    this.kickPlayer(player.id);
+                });
+                item.appendChild(kickBtn);
+            }
+
             playerList.appendChild(item);
         });
 
         // Count connected players
         const connectedCount = state.players.filter(p => p.connected !== false).length;
+        const hasPendingRequest = state.isHost && (GameRoom.activeJoinRequest || GameRoom.pendingJoinRequests.length > 0);
+        if (startBtn && !startBtn.dataset.defaultHtml) {
+            startBtn.dataset.defaultHtml = startBtn.innerHTML;
+        }
 
         // Update UI based on role
         if (state.isHost) {
             startBtn.style.display = 'block';
-            startBtn.disabled = connectedCount < 2;
-            waitingText.textContent = connectedCount < 2
-                ? 'Waiting for players to join...'
-                : `${connectedCount} players ready!`;
+            if (hasPendingRequest) {
+                startBtn.disabled = true;
+                startBtn.classList.add('pending');
+                startBtn.innerHTML = '<i class="fa-solid fa-hourglass-half"></i> Join Request Pending';
+                waitingText.textContent = 'Join request pending...';
+            } else {
+                startBtn.disabled = connectedCount < 2;
+                startBtn.classList.remove('pending');
+                startBtn.innerHTML = startBtn.dataset.defaultHtml;
+                waitingText.textContent = connectedCount < 2
+                    ? 'Waiting for players to join...'
+                    : `${connectedCount} players ready!`;
+            }
         } else {
             startBtn.style.display = 'none';
             waitingText.textContent = 'Waiting for host to start the game...';
@@ -127,6 +166,7 @@ const Lobby = {
                     producerTypes: state.producerTypes,
                     usedIcons: Array.from(state.usedIcons),
                     selectedProducerType: state.selectedProducerType,
+                    hostSeed: state.hostSeed,
                     unlocks: state.unlocks,
                     unlockedColors: Array.from(state.unlockedColors)
                 }
@@ -141,6 +181,9 @@ const Lobby = {
     initHostGame() {
         state.colorManager = new ColorManager(COLOR_CONFIG);
         state.money = COLOR_CONFIG.starting.money;
+        if (state.gameMode === 'multi' && !state.hostSeed) {
+            state.hostSeed = Math.floor(Math.random() * 1e9);
+        }
 
         // Unlock starting colors
         COLOR_CONFIG.starting.colors.forEach(color => {
@@ -154,7 +197,12 @@ const Lobby = {
         setupGrid();
 
         // Initialize producer (this is where randomness happens)
-        unlockNewProducer();
+        if (state.gameMode === 'multi') {
+            const startingIcon = pickRandomStartingIcon(state.players);
+            unlockNewProducer(startingIcon);
+        } else {
+            unlockNewProducer();
+        }
     },
 
     // Called by host after initHostGame
@@ -177,6 +225,10 @@ const Lobby = {
         // Set up multiplayer UI
         this.setupCursorTracking();
         this.updateMultiplayerUI();
+
+        if (state.gameMode === 'multi' && typeof Achievements !== 'undefined') {
+            Achievements.onMultiplayerStart();
+        }
     },
 
     // Called by joiner when receiving game_start
@@ -308,7 +360,99 @@ const Lobby = {
         sidebar.classList.remove('hidden');
         this.setupTransferControls();
         this.setupEmoteControls();
+        this.setupSidebarToggles();
+        this.setupHostMonitor();
+        this.updateSidebarRoomCode();
         this.refreshMoneyDisplay();
+
+        // Setup chat
+        if (typeof Chat !== 'undefined') {
+            Chat.setup();
+        }
+    },
+
+    setupHostMonitor() {
+        if (this.hostMonitorReady) return;
+        this.hostMonitorReady = true;
+
+        let lastHostMessage = Date.now();
+        let hostDisconnected = false;
+
+        // Reset timer when we receive any message from host
+        window.addEventListener('host-message-received', () => {
+            lastHostMessage = Date.now();
+            hostDisconnected = false;
+        });
+
+        this.hostMonitorTimer = setInterval(() => {
+            if (state.gameMode !== 'multi' || state.isHost) return;
+
+            const hostId = GameRoom.hostPeerId;
+            if (!hostId) return;
+
+            const conn = PeerManager.connections.get(hostId);
+            const timeSinceLastMessage = Date.now() - lastHostMessage;
+
+            // Check if connection is closed
+            if (conn && !conn.open && !hostDisconnected) {
+                console.log('Host connection closed, starting 30s timer...');
+                hostDisconnected = true;
+                lastHostMessage = Date.now(); // Start the 30s countdown
+            }
+
+            // If host has been disconnected for 30 seconds, convert to single player
+            if (hostDisconnected && timeSinceLastMessage > 30000) {
+                console.log('No host communication for 30 seconds, converting to single player');
+                clearInterval(this.hostMonitorTimer);
+                this.hostMonitorTimer = null;
+                this.hostMonitorReady = false;
+                GameRoom.convertToSinglePlayer();
+            }
+        }, 1000);
+    },
+
+    updateSidebarRoomCode() {
+        const roomContainer = document.getElementById('sidebar-room');
+        const roomCodeEl = document.getElementById('sidebar-room-code');
+        const copyBtn = document.getElementById('btn-copy-code-sidebar');
+        if (!roomContainer || !roomCodeEl) return;
+
+        const code = GameRoom.roomCode || '';
+        if (state.gameMode !== 'multi' || !code) {
+            roomContainer.classList.add('hidden');
+            return;
+        }
+
+        roomContainer.classList.remove('hidden');
+        roomCodeEl.textContent = code;
+
+        if (copyBtn && !this.roomCodeCopyReady) {
+            const originalHtml = copyBtn.innerHTML;
+            copyBtn.addEventListener('click', () => {
+                navigator.clipboard.writeText(code).then(() => {
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = originalHtml;
+                    }, 2000);
+                });
+            });
+            this.roomCodeCopyReady = true;
+        }
+    },
+
+    setupSidebarToggles() {
+        if (this.sidebarToggleReady) return;
+        const toggles = document.querySelectorAll('#player-sidebar .section-toggle');
+        if (!toggles.length) return;
+
+        toggles.forEach((toggle) => {
+            toggle.addEventListener('click', () => {
+                const section = toggle.closest('.sidebar-section');
+                if (!section) return;
+                section.classList.toggle('collapsed');
+            });
+        });
+        this.sidebarToggleReady = true;
     },
 
     refreshMoneyDisplay() {
@@ -317,6 +461,9 @@ const Lobby = {
         const list = document.getElementById('sidebar-player-list');
         const targetSelect = document.getElementById('transfer-target');
         if (!list || !targetSelect) return;
+
+        // Preserve current dropdown selection
+        const currentSelection = targetSelect.value;
 
         list.innerHTML = '';
         targetSelect.innerHTML = '<option value="">Select player...</option>';
@@ -354,6 +501,19 @@ const Lobby = {
                 info.appendChild(name);
                 row.appendChild(info);
                 row.appendChild(amount);
+
+                if (state.isHost) {
+                    const kickBtn = document.createElement('button');
+                    kickBtn.className = 'sidebar-kick-btn';
+                    kickBtn.type = 'button';
+                    kickBtn.title = 'Kick player';
+                    kickBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    kickBtn.addEventListener('click', () => {
+                        this.kickPlayer(player.id);
+                    });
+                    row.appendChild(kickBtn);
+                }
+
                 list.appendChild(row);
             });
         }
@@ -364,6 +524,11 @@ const Lobby = {
             option.textContent = player.name;
             targetSelect.appendChild(option);
         });
+
+        // Restore previous selection if the player is still available
+        if (currentSelection && connectedPlayers.some(p => p.id === currentSelection)) {
+            targetSelect.value = currentSelection;
+        }
 
         targetSelect.disabled = connectedPlayers.length === 0;
         const sendButton = document.getElementById('btn-send-money');
@@ -414,6 +579,11 @@ const Lobby = {
         }
     },
 
+    kickPlayer(playerId) {
+        if (!state.isHost) return;
+        GameRoom.kickPlayer(playerId);
+    },
+
     setupTransferControls() {
         if (this.transferReady) return;
 
@@ -445,23 +615,105 @@ const Lobby = {
         buttons.forEach((button) => {
             button.addEventListener('click', () => {
                 const emote = button.dataset.emote || '';
-                this.setLocalEmote(emote);
+                this.selectEmote(emote);
             });
         });
 
         this.emoteReady = true;
     },
 
-    syncEmoteButtons() {
+    // Select an emote to place on next grid click
+    selectEmote(emote) {
+        if (state.gameMode !== 'multi') return;
+
+        if (!emote) {
+            // Clear button clicked - clear pending emote
+            this.pendingEmote = null;
+            this.syncEmoteButtons();
+            return;
+        }
+
+        // Toggle pending emote
+        if (this.pendingEmote === emote) {
+            this.pendingEmote = null;
+        } else {
+            this.pendingEmote = emote;
+        }
+        this.syncEmoteButtons();
+    },
+
+    // Called when grid is clicked - place emote if one is pending
+    handleGridClick(x, y) {
+        if (!this.pendingEmote || state.gameMode !== 'multi') return false;
+
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
-        const current = localPlayer?.emote || '';
+        if (!localPlayer) return false;
+
+        // Place the emote on grid
+        this.placeGridEmote(x, y, this.pendingEmote, localPlayer.color, state.localPlayerId);
+
+        // Broadcast to others
+        Sync.broadcast({
+            type: Protocol.types.EMOTE_UPDATE,
+            data: {
+                playerId: state.localPlayerId,
+                emote: this.pendingEmote,
+                gridX: x,
+                gridY: y,
+                playerColor: localPlayer.color
+            }
+        });
+
+        // Clear pending emote after placing
+        this.pendingEmote = null;
+        this.syncEmoteButtons();
+
+        return true; // Indicate emote was placed
+    },
+
+    // Place an emote visually on the grid
+    placeGridEmote(x, y, emote, playerColor, playerId) {
+        const iconClass = this.emoteIcons[emote];
+        if (!iconClass) return;
+
+        // Create emote element
+        const emoteEl = document.createElement('div');
+        emoteEl.className = 'grid-emote';
+        emoteEl.innerHTML = `<i class="fa-solid ${iconClass}"></i>`;
+        emoteEl.style.color = playerColor;
+
+        // Position it on the grid
+        const cellSize = state.cellSize;
+        emoteEl.style.left = (x * cellSize + cellSize / 2) + 'px';
+        emoteEl.style.top = (y * cellSize + cellSize / 2) + 'px';
+
+        // Add to grid
+        const cursorContainer = this.ensureCursorContainer();
+        cursorContainer.appendChild(emoteEl);
+
+        // Track it
+        const emoteData = { el: emoteEl, playerId };
+        this.gridEmotes.push(emoteData);
+
+        // Animate and remove after duration
+        setTimeout(() => {
+            emoteEl.classList.add('fade-out');
+            setTimeout(() => {
+                emoteEl.remove();
+                this.gridEmotes = this.gridEmotes.filter(e => e !== emoteData);
+            }, 500);
+        }, this.emoteDurationMs);
+    },
+
+    syncEmoteButtons() {
         document.querySelectorAll('.emote-btn').forEach((button) => {
             const value = button.dataset.emote || '';
-            button.classList.toggle('active', value === current);
+            button.classList.toggle('active', value === this.pendingEmote);
         });
     },
 
     setLocalEmote(emote) {
+        // Legacy function - now used only for cursor emote display
         if (state.gameMode !== 'multi') return;
 
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
@@ -469,7 +721,6 @@ const Lobby = {
 
         const normalized = emote || '';
         localPlayer.emote = normalized || null;
-        this.syncEmoteButtons();
         this.scheduleEmoteClear(state.localPlayerId, normalized, true);
 
         Sync.broadcast({
@@ -560,6 +811,7 @@ const Lobby = {
         });
 
         amountInput.value = '';
+        targetSelect.value = '';
     },
 
     applyMoneyTransfer(fromPlayerId, toPlayerId, amount) {
@@ -593,6 +845,15 @@ const Lobby = {
         state.gameMode = 'single';
         state.isHost = false;
         state.localPlayerId = null;
+        state.hostSeed = null;
+        this.roomCodeCopyReady = false;
+        this.sidebarToggleReady = false;
+        this.hostMonitorReady = false;
+
+        if (this.hostMonitorTimer) {
+            clearInterval(this.hostMonitorTimer);
+            this.hostMonitorTimer = null;
+        }
 
         const sidebar = document.getElementById('player-sidebar');
         if (sidebar) {

@@ -5,6 +5,7 @@ const Protocol = {
         // Connection/lobby messages
         PLAYER_JOINED: 'player_joined',
         PLAYER_LEFT: 'player_left',
+        PLAYER_KICKED: 'player_kicked',
         PLAYER_LIST: 'player_list',
         GAME_START: 'game_start',
         REQUEST_SYNC: 'request_sync',
@@ -14,6 +15,7 @@ const Protocol = {
         TILE_PLACED: 'tile_placed',
         TILE_REMOVED: 'tile_removed',
         ITEM_SOLD: 'item_sold',
+        GRID_EXPANDED: 'grid_expanded',
 
         // Player messages
         CURSOR_MOVE: 'cursor_move',
@@ -22,6 +24,9 @@ const Protocol = {
         EMOTE_UPDATE: 'emote_update',
         UNLOCK_UPDATE: 'unlock_update',
         JOIN_DENIED: 'join_denied',
+        HOST_CHANGED: 'host_changed',
+        CHAT_MESSAGE: 'chat_message',
+        BLOCK_SUGGESTION: 'block_suggestion',
 
         // State sync
         FULL_STATE: 'full_state'
@@ -39,6 +44,14 @@ const Protocol = {
 
     // Handle incoming message
     handleMessage(message) {
+        // If this message is from the host, dispatch event to reset the timer
+        if (!state.isHost && message.senderId) {
+            const sender = state.players.find(p => p.id === message.senderId);
+            if (sender && sender.isHost) {
+                window.dispatchEvent(new CustomEvent('host-message-received'));
+            }
+        }
+
         switch (message.type) {
             case this.types.PLAYER_JOINED:
                 this.handlePlayerJoined(message.data);
@@ -46,6 +59,10 @@ const Protocol = {
 
             case this.types.PLAYER_LEFT:
                 this.handlePlayerLeft(message.data);
+                break;
+
+            case this.types.PLAYER_KICKED:
+                this.handlePlayerKicked(message.data);
                 break;
 
             case this.types.PLAYER_LIST:
@@ -76,6 +93,10 @@ const Protocol = {
                 this.handleItemSold(message.data);
                 break;
 
+            case this.types.GRID_EXPANDED:
+                this.handleGridExpanded(message.data);
+                break;
+
             case this.types.CURSOR_MOVE:
                 this.handleCursorMove(message.data);
                 break;
@@ -98,6 +119,14 @@ const Protocol = {
 
             case this.types.JOIN_DENIED:
                 this.handleJoinDenied(message.data);
+                break;
+
+            case this.types.CHAT_MESSAGE:
+                this.handleChatMessage(message.data);
+                break;
+
+            case this.types.BLOCK_SUGGESTION:
+                this.handleBlockSuggestion(message.data);
                 break;
 
             case this.types.FULL_STATE:
@@ -129,14 +158,16 @@ const Protocol = {
 
     handlePlayerLeft(data) {
         const { playerId } = data;
+        GameRoom.handlePlayerDeparture(playerId);
+    },
 
-        // Remove player from list
-        state.players = state.players.filter(p => p.id !== playerId);
-
-        Lobby.update();
-
-        // Remove their cursor
-        Lobby.clearRemoteCursor(playerId);
+    handlePlayerKicked(data) {
+        const reason = data?.reason || 'You were removed by the host.';
+        GameRoom.leaveRoom();
+        Lobby.reset();
+        Menu.show();
+        Menu.showScreen('join');
+        Menu.updateJoinStatus(reason, 'error');
     },
 
     handlePlayerList(data) {
@@ -159,12 +190,25 @@ const Protocol = {
             }
         });
 
+        const hostPlayer = state.players.find(player => player.isHost);
+        if (hostPlayer) {
+            const hostPeerId = hostPlayer.peerId || hostPlayer.id;
+            GameRoom.hostPeerId = hostPeerId;
+            PeerManager.hostPeerId = hostPeerId;
+        }
+
         Lobby.update();
     },
 
     handleGameStart(data) {
         // Update players list from host
         state.players = data.players;
+        const hostPlayer = state.players.find(player => player.isHost);
+        if (hostPlayer) {
+            const hostPeerId = hostPlayer.peerId || hostPlayer.id;
+            GameRoom.hostPeerId = hostPeerId;
+            PeerManager.hostPeerId = hostPeerId;
+        }
 
         // Find ourselves in the list and update money
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
@@ -186,6 +230,9 @@ const Protocol = {
             }
             if (data.initialState.selectedProducerType !== undefined) {
                 state.selectedProducerType = data.initialState.selectedProducerType;
+            }
+            if (data.initialState.hostSeed !== undefined) {
+                state.hostSeed = data.initialState.hostSeed;
             }
             if (data.initialState.unlocks) {
                 state.unlocks = { ...state.unlocks, ...data.initialState.unlocks };
@@ -216,6 +263,12 @@ const Protocol = {
 
         // Update players
         state.players = players;
+        const hostPlayer = state.players.find(player => player.isHost);
+        if (hostPlayer) {
+            const hostPeerId = hostPlayer.peerId || hostPlayer.id;
+            GameRoom.hostPeerId = hostPeerId;
+            PeerManager.hostPeerId = hostPeerId;
+        }
 
         // Update our money
         state.money = yourMoney;
@@ -231,6 +284,9 @@ const Protocol = {
             state.producerTypes = gameState.producerTypes || [];
             state.usedIcons = new Set(gameState.usedIcons || []);
             state.selectedProducerType = gameState.selectedProducerType || 0;
+            if (gameState.hostSeed !== undefined) {
+                state.hostSeed = gameState.hostSeed;
+            }
             if (gameState.unlocks) {
                 state.unlocks = { ...state.unlocks, ...gameState.unlocks };
             }
@@ -297,6 +353,36 @@ const Protocol = {
         // This handler is kept for potential future use (e.g., showing remote sale animations)
     },
 
+    handleGridExpanded(data) {
+        const { type, playerId } = data;
+
+        // Don't process our own expansion
+        if (playerId === state.localPlayerId) return;
+
+        // Apply the expansion without cost (cost was paid by the player who expanded)
+        if (type === 'row') {
+            state.rows++;
+            const newRow = [];
+            for (let x = 0; x < state.cols; x++) {
+                newRow.push({ type: null, rotation: 0, color: null });
+            }
+            state.grid.push(newRow);
+        } else {
+            state.cols++;
+            for (let y = 0; y < state.rows; y++) {
+                state.grid[y].push({ type: null, rotation: 0, color: null });
+            }
+        }
+
+        // Re-render grid
+        setupGrid(true);
+        spawnFloatingText(0, 0, "Grid expanded!");
+
+        if (typeof Lobby !== 'undefined') {
+            Lobby.restoreRemoteCursors();
+        }
+    },
+
     handleCursorMove(data) {
         const { x, y, playerId } = data;
 
@@ -328,10 +414,17 @@ const Protocol = {
     },
 
     handleEmoteUpdate(data) {
-        const { playerId, emote } = data;
+        const { playerId, emote, gridX, gridY, playerColor } = data;
         if (!playerId) return;
 
-        Lobby.updatePlayerEmote(playerId, emote);
+        // Check if this is a grid emote placement
+        if (gridX !== undefined && gridY !== undefined) {
+            // Place emote on grid for remote player
+            Lobby.placeGridEmote(gridX, gridY, emote, playerColor, playerId);
+        } else {
+            // Legacy cursor emote display
+            Lobby.updatePlayerEmote(playerId, emote);
+        }
     },
 
     handleUnlockUpdate(data) {
@@ -388,6 +481,31 @@ const Protocol = {
         Menu.updateJoinStatus(reason, 'error');
     },
 
+
+    handleChatMessage(data) {
+        const { playerId, message, playerName, playerColor } = data;
+        if (!playerId || !message) return;
+
+        // Don't show our own messages (we already added them locally)
+        if (playerId === state.localPlayerId) return;
+
+        Chat.addMessage(playerName, message, playerColor, false);
+    },
+
+    handleBlockSuggestion(data) {
+        const { playerId, x, y, tile, playerColor, playerName, clear } = data;
+        if (!playerId) return;
+
+        // Don't show our own suggestions
+        if (playerId === state.localPlayerId) return;
+
+        if (clear) {
+            Suggestions.clearSuggestion(playerId);
+        } else {
+            Suggestions.showSuggestion(playerId, x, y, tile, playerColor, playerName);
+        }
+    },
+
     handleFullState(data) {
         // Used for late joiners or resync
         if (data.grid) {
@@ -403,6 +521,12 @@ const Protocol = {
         if (data.players) {
             state.players = data.players;
             Lobby.refreshMoneyDisplay();
+            const hostPlayer = state.players.find(player => player.isHost);
+            if (hostPlayer) {
+                const hostPeerId = hostPlayer.peerId || hostPlayer.id;
+                GameRoom.hostPeerId = hostPeerId;
+                PeerManager.hostPeerId = hostPeerId;
+            }
         }
 
         if (data.unlocks) {
@@ -419,6 +543,9 @@ const Protocol = {
 
         if (data.usedIcons) {
             state.usedIcons = new Set(data.usedIcons);
+        }
+        if (data.hostSeed !== undefined) {
+            state.hostSeed = data.hostSeed;
         }
 
         if (data.items) {
