@@ -1,0 +1,49 @@
+/* Packager */
+.packager {
+    background: transparent;
+    z-index: 20;
+}
+
+.packager::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    left: -50%;
+    right: -50%;
+    background: repeating-linear-gradient(90deg,
+            transparent, transparent 10px,
+            #6b7280 10px, #6b7280 14px,
+            transparent 14px, transparent 24px);
+    border-top: 2px solid #6b7280;
+    border-bottom: 2px solid #6b7280;
+    z-index: 1;
+    animation: belt-move 1s linear infinite;
+    opacity: 0.6;
+}
+
+.packager::after {
+    content: '\f466';
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 5%;
+    bottom: 5%;
+    left: 20%;
+    right: 20%;
+    background: linear-gradient(to bottom, #8b4513 0%, #654321 50%, #8b4513 100%);
+    border: 2px solid #5a3310;
+    border-radius: 4px;
+    z-index: 15;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--cell-size) * 0.4);
+    color: #d97706;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3),
+                0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.packager.paused::before {
+    animation-play-state: paused;
+}

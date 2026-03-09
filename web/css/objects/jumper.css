@@ -1,0 +1,24 @@
+/* Jumper Pad */
+.jumper {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background: white;
+    border: 2px solid var(--ink-black);
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Double arrow icon - now uses right-pointing arrow that will rotate with tile */
+.jumper::after {
+    content: "\f101"; /* fa-angles-right - will rotate with parent */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    font-size: calc(var(--cell-size) * 0.5);
+    z-index: 3;
+    color: #7c3aed;
+}

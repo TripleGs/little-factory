@@ -1,0 +1,14 @@
+Single Player/Multiplayer
+- Remove stats
+- new producer cost should double each time
+- expand map size should double each time
+- the price to place something should double each time (aka if placing a producer for 25 the next producer cost 50)
+- there should be a header across the top which contains the title and the hotbar options. Allow the player to right click and drag, or click and drag outside of the grid.
+
+Multiplayer
+- Players should not share price increase, they only share a playing field and split the profit of items
+- The only thing that should be shared is the speed, if someone increases the speed everyone gets that
+
+Other:
+Determine which audio is actually used
+Determine unused files and code that can be removed

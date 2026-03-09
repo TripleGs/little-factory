@@ -1,0 +1,32 @@
+/* Belt Icon (for palette) */
+.belt-icon {
+    display: inline-block !important;
+    width: 30px !important;
+    height: 20px !important;
+    background: repeating-linear-gradient(90deg,
+            transparent, transparent 5px,
+            var(--ink-black) 5px, var(--ink-black) 7px,
+            transparent 7px, transparent 12px) !important;
+    border-top: 2px solid var(--ink-black) !important;
+    border-bottom: 2px solid var(--ink-black) !important;
+    border-left: 2px solid var(--ink-black) !important;
+    border-right: 2px solid var(--ink-black) !important;
+    position: relative;
+    font-size: inherit !important;
+    text-transform: none !important;
+}
+
+.belt-icon-tiny {
+    display: inline-block;
+    width: 16px;
+    height: 10px;
+    background: repeating-linear-gradient(90deg,
+            transparent, transparent 3px,
+            var(--ink-black) 3px, var(--ink-black) 4px,
+            transparent 4px, transparent 7px);
+    border-top: 1px solid var(--ink-black);
+    border-bottom: 1px solid var(--ink-black);
+    border-left: 1px solid var(--ink-black);
+    border-right: 1px solid var(--ink-black);
+    vertical-align: middle;
+}

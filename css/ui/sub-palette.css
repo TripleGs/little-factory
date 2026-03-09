@@ -1,0 +1,70 @@
+/* Float sub-palette above */
+.sub-palette {
+    display: grid;
+    grid-template-columns: repeat(3, 40px);
+    /* Default, JS overrides dynamically */
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: var(--ink-white);
+    border: 2px solid var(--ink-black);
+    border-radius: 10px;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
+    pointer-events: auto;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.2s ease;
+    visibility: hidden;
+    margin-bottom: -10px;
+    /* Overlap slightly or spacing */
+    z-index: 200;
+    position: relative;
+
+    /* Scrolling for multiple rows */
+    max-height: 300px;
+    max-width: 500px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--ink-black) var(--bg-paper);
+}
+
+/* Webkit scrollbar styling */
+.sub-palette::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.sub-palette::-webkit-scrollbar-track {
+    background: var(--bg-paper);
+    border-radius: 3px;
+}
+
+.sub-palette::-webkit-scrollbar-thumb {
+    background: var(--ink-black);
+    border-radius: 3px;
+}
+
+.sub-palette.visible {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+    margin-bottom: 0;
+}
+
+.sub-palette .tool-btn {
+    width: 40px;
+    height: 40px;
+}
+
+.sub-palette .tool-btn span {
+    display: none;
+    /* Icon only for cleaner look */
+}
+
+.sub-palette .empty-message {
+    grid-column: 1 / -1;
+    padding: 0.5rem 1rem;
+    color: var(--ink-gray);
+    font-size: 0.9rem;
+    white-space: nowrap;
+    text-align: center;
+}

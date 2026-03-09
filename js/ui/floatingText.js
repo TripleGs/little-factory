@@ -1,0 +1,24 @@
+function spawnFloatingText(x, y, text) {
+    if (typeof Meta !== 'undefined') {
+        const settings = Meta.getSettings();
+        if (settings.showFloatingText === false) {
+            return;
+        }
+    }
+
+    const el = document.createElement('div');
+    el.className = 'floating-text';
+    el.innerText = text;
+    el.style.left = `${x * (state.cellSize + state.gapSize) + COLOR_CONFIG.floatingText.offsetX}px`;
+    el.style.top = `${y * (state.cellSize + state.gapSize) + COLOR_CONFIG.floatingText.offsetY}px`;
+    el.style.width = `${state.cellSize}px`;
+    el.style.textAlign = 'center';
+    els.grid.appendChild(el);
+
+    requestAnimationFrame(() => {
+        el.style.transform = `translateY(${COLOR_CONFIG.floatingText.moveDistance}px)`;
+        el.style.opacity = '0';
+    });
+
+    setTimeout(() => el.remove(), COLOR_CONFIG.floatingText.duration);
+}

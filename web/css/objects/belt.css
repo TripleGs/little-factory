@@ -1,0 +1,46 @@
+/* Belt */
+.belt {
+    background: transparent;
+}
+
+.belt::before {
+    content: '';
+    position: absolute;
+    top: 20%;
+    bottom: 20%;
+    left: -50%;
+    right: -50%;
+    background: repeating-linear-gradient(90deg,
+            transparent, transparent 10px,
+            var(--ink-black) 10px, var(--ink-black) 14px,
+            transparent 14px, transparent 24px);
+    z-index: 1;
+    animation: belt-move 1s linear infinite;
+    opacity: 0.8;
+}
+
+.belt::after {
+    content: '';
+    position: absolute;
+    top: 15%;
+    bottom: 15%;
+    left: 0;
+    right: 0;
+    border-top: 2px solid var(--ink-black);
+    border-bottom: 2px solid var(--ink-black);
+    z-index: 2;
+}
+
+.belt.paused::before {
+    animation-play-state: paused;
+}
+
+@keyframes belt-move {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(24px);
+    }
+}
