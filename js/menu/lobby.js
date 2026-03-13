@@ -163,7 +163,7 @@ const Lobby = {
         // Distribute starting money
         const startingMoney = COLOR_CONFIG.starting.money;
         state.players.forEach(player => {
-            player.money = startingMoney;
+            setPlayerMoney(player, startingMoney);
         });
 
         // Host initializes the game first to generate state
@@ -195,7 +195,7 @@ const Lobby = {
     // Host initializes the game state that will be shared
     initHostGame() {
         state.colorManager = new ColorManager(COLOR_CONFIG);
-        state.money = COLOR_CONFIG.starting.money;
+        setMoney(COLOR_CONFIG.starting.money);
         if (state.gameMode === 'multi' && !state.hostSeed) {
             state.hostSeed = Math.floor(Math.random() * 1e9);
         }
@@ -236,7 +236,7 @@ const Lobby = {
         }
 
         els.grid.appendChild(els.itemLayer);
-        els.money.innerText = state.money;
+        syncMoneyDisplay();
         applyZoom();
         requestAnimationFrame(loop);
 
@@ -373,11 +373,6 @@ const Lobby = {
     updateMultiplayerUI() {
         const sidebar = document.getElementById('player-sidebar');
         if (!sidebar) return;
-
-        const headerStats = document.getElementById('multiplayer-stats');
-        if (headerStats) {
-            headerStats.remove();
-        }
 
         if (state.gameMode !== 'multi') {
             sidebar.classList.add('hidden');
@@ -523,7 +518,7 @@ const Lobby = {
                 const amount = document.createElement('span');
                 amount.className = 'sidebar-player-money';
                 amount.id = 'sidebar-money-' + player.id;
-                amount.textContent = '$' + Math.floor(player.money || 0);
+                amount.textContent = '$' + formatMoney(player.money || 0);
 
                 info.appendChild(playerIcon);
                 info.appendChild(name);
@@ -570,12 +565,12 @@ const Lobby = {
     updatePlayerMoney(playerId, amount) {
         const player = state.players.find(p => p.id === playerId);
         if (player) {
-            player.money = amount;
+            setPlayerMoney(player, amount);
         }
 
         const el = document.getElementById('sidebar-money-' + playerId);
         if (el) {
-            el.textContent = '$' + Math.floor(amount);
+            el.textContent = '$' + formatMoney(amount);
         } else {
             this.refreshMoneyDisplay();
         }
@@ -850,19 +845,17 @@ const Lobby = {
         const receiver = state.players.find(player => player.id === toPlayerId);
 
         if (sender) {
-            sender.money = (sender.money || 0) - transferAmount;
+            setPlayerMoney(sender, (sender.money || 0) - transferAmount);
         }
 
         if (receiver) {
-            receiver.money = (receiver.money || 0) + transferAmount;
+            setPlayerMoney(receiver, (receiver.money || 0) + transferAmount);
         }
 
         if (fromPlayerId === state.localPlayerId) {
-            state.money = sender ? sender.money : state.money - transferAmount;
-            els.money.innerText = Math.floor(state.money);
+            setMoney(sender ? sender.money : state.money - transferAmount);
         } else if (toPlayerId === state.localPlayerId) {
-            state.money = receiver ? receiver.money : state.money + transferAmount;
-            els.money.innerText = Math.floor(state.money);
+            setMoney(receiver ? receiver.money : state.money + transferAmount);
         }
 
         this.refreshMoneyDisplay();
@@ -874,11 +867,7 @@ const Lobby = {
             Sound.stopAll();
         }
 
-        state.players = [];
-        state.gameMode = 'single';
-        state.isHost = false;
-        state.localPlayerId = null;
-        state.hostSeed = null;
+        resetGameState();
         this.roomCodeCopyReady = false;
         this.sidebarToggleReady = false;
         this.hostMonitorReady = false;

@@ -3,6 +3,18 @@
 // Tools that appear in the belt popup (not in main hotbar)
 const BELT_TOOLS = ['belt', 'packager', 'stopper', 'jumper'];
 
+function showSubPalette() {
+    if (els.subPalette) {
+        els.subPalette.classList.add('visible');
+    }
+}
+
+function hideSubPalette() {
+    if (els.subPalette) {
+        els.subPalette.classList.remove('visible');
+    }
+}
+
 function renderPalette() {
     els.palette.innerHTML = '';
     renderToolButtons();
@@ -108,15 +120,19 @@ function createToolButton(tool) {
 
 // Hide sub-palette when cursor enters a grid cell (not expand buttons)
 function setupPaletteHoverBehavior() {
+    if (!els.grid || !els.subPalette) return;
+
     els.grid.addEventListener('mouseover', (e) => {
         // Only hide if entering a grid cell, not expand buttons
         if (e.target.classList.contains('cell')) {
-            els.subPalette.classList.remove('visible');
+            hideSubPalette();
         }
     });
 }
 
 function renderSubPalette() {
+    if (!els.subPalette) return;
+
     els.subPalette.innerHTML = '';
 
     if (state.tool === 'paint') {
@@ -190,8 +206,7 @@ function createBeltUnlockButton(unlockKey) {
     btn.onclick = (e) => {
         e.stopPropagation();
         if (state.money >= cost) {
-            state.money -= cost;
-            els.money.innerText = state.money;
+            setMoney(state.money - cost);
             state.unlocks[unlockKey] = true;
             spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${info.name}!`);
             Sound.play('unlock');
@@ -241,7 +256,7 @@ function selectBeltTool(tool) {
     state.tool = tool.id;
     state.toolData = tool;
 
-    els.subPalette.classList.remove('visible');
+    hideSubPalette();
 
     renderPalette();
 }
@@ -304,8 +319,7 @@ function createColorButton(color) {
         btn.onclick = (e) => {
             e.stopPropagation();
             if (state.money >= unlockCost) {
-                state.money -= unlockCost;
-                els.money.innerText = state.money;
+                setMoney(state.money - unlockCost);
                 state.unlockedColors.add(color.id);
                 spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${color.name}!`);
                 Sound.play('unlock');
@@ -394,10 +408,7 @@ function createNewProducerButton() {
     btn.className = 'tool-btn';
     btn.style.borderStyle = 'dashed';
 
-    // Scale cost based on number of producer types unlocked: 1000, 2000, 3000, etc.
-    const baseCost = COLOR_CONFIG.costs.newProducer;
-    const producerCount = state.producerTypes.length;
-    const newProducerCost = baseCost * Math.max(1, producerCount);
+    const newProducerCost = getNewProducerCost();
     const canAfford = state.money >= newProducerCost;
 
     btn.innerHTML = `<i class="fa-solid fa-plus"></i><span class="price-tag">$${newProducerCost}</span>`;
@@ -425,8 +436,9 @@ function handleNewProducerPurchase(cost, iconClass) {
             return;
         }
 
-        state.money -= cost;
-        els.money.innerText = state.money;
+        setMoney(state.money - cost);
+        state.newProducerPurchases++;
+        syncLocalProgressionToPlayerRecord();
         const result = unlockNewProducer(iconClass);
         const newType = result.type;
         spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${newType.name}!`);
@@ -444,6 +456,8 @@ function handleNewProducerPurchase(cost, iconClass) {
             }
             Sync.broadcastMoneyUpdate();
             Sync.broadcastUnlockState({
+                playerId: state.localPlayerId,
+                progression: captureLocalProgression(),
                 unlocks: state.unlocks,
                 unlockedColors: Array.from(state.unlockedColors),
                 producerTypes: state.producerTypes,
@@ -472,7 +486,7 @@ function selectTool(tool, btnEl) {
 
     // Tools with sub-palettes show their popup on click
     if (tool.id === 'paint' || tool.id === 'producer' || tool.id === 'belt') {
-        els.subPalette.classList.add('visible');
+        showSubPalette();
         renderSubPalette();
 
         // If paint and a color is already selected, re-apply it to toolData
@@ -484,7 +498,7 @@ function selectTool(tool, btnEl) {
             };
         }
     } else {
-        els.subPalette.classList.remove('visible');
+        hideSubPalette();
     }
 }
 
@@ -500,7 +514,7 @@ function selectPaintColor(colorObj) {
     };
 
     // Close sub-palette after selecting color
-    els.subPalette.classList.remove('visible');
+    hideSubPalette();
 
     renderPalette(); // Update main icon color
 }
@@ -538,8 +552,7 @@ function createUnlockButton(unlockKey) {
 
     btn.onclick = () => {
         if (state.money >= cost) {
-            state.money -= cost;
-            els.money.innerText = state.money;
+            setMoney(state.money - cost);
             state.unlocks[unlockKey] = true;
 
             spawnFloatingText(state.cols / 2, state.rows / 2, `${info.name}!`);

@@ -1,7 +1,0 @@
-.grid-container.is-panning {
-    cursor: grabbing;
-}
-
-.grid-container.is-panning .cell {
-    cursor: grabbing;
-}

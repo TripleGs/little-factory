@@ -1,6 +1,6 @@
-/* Float sub-palette above */
+/* Overlay sub-palette under the hotbar */
 .sub-palette {
-    display: grid;
+    display: none;
     grid-template-columns: repeat(3, 40px);
     /* Default, JS overrides dynamically */
     gap: 0.5rem;
@@ -9,19 +9,20 @@
     border: 2px solid var(--ink-black);
     border-radius: 10px;
     box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.1);
-    pointer-events: auto;
+    pointer-events: none;
     opacity: 0;
-    transform: translateY(10px);
     transition: all 0.2s ease;
     visibility: hidden;
-    margin-bottom: -10px;
-    /* Overlap slightly or spacing */
     z-index: 200;
-    position: relative;
+    position: absolute;
+    top: calc(100% + 0.75rem);
+    left: 50%;
+    margin: 0;
+    transform: translate(-50%, 10px);
 
     /* Scrolling for multiple rows */
     max-height: 300px;
-    max-width: 500px;
+    max-width: min(calc(100vw - (2 * var(--app-padding))), 500px);
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--ink-black) var(--bg-paper);
@@ -44,10 +45,11 @@
 }
 
 .sub-palette.visible {
+    display: grid;
     opacity: 1;
-    transform: translateY(0);
+    transform: translate(-50%, 0);
     visibility: visible;
-    margin-bottom: 0;
+    pointer-events: auto;
 }
 
 .sub-palette .tool-btn {

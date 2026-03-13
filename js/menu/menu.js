@@ -281,6 +281,7 @@ const Menu = {
     },
 
     startSinglePlayer() {
+        resetGameState();
         state.gameMode = 'single';
         state.localPlayerId = 'local';
         state.isHost = true;
@@ -292,8 +293,11 @@ const Menu = {
             money: 0,
             color: '#4CAF50',
             emote: null,
-            startingIcon: startingIcon
+            startingIcon: startingIcon,
+            progression: createEmptyProgression()
         }];
+
+        syncLocalProgressionToPlayerRecord();
 
         this.hide();
         initGame();

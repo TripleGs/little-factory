@@ -20,19 +20,3 @@ function createItem(x, y, icon, producerType) {
         packagedBy: new Set()
     };
 }
-
-// Tile Creation Factory
-function createTile(toolType, rotation, toolData) {
-    const tile = {
-        type: toolType,
-        rotation: rotation
-    };
-
-    if (toolType === 'colorer') {
-        tile.color = { ...toolData.color };
-    } else if (toolType === 'producer') {
-        tile.producerType = toolData.producerType ?? 0;
-    }
-
-    return tile;
-}

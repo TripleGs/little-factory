@@ -1,7 +1,14 @@
-.grid-container.is-panning {
-    cursor: grabbing;
+.map-viewport {
+    cursor: grab;
 }
 
-.grid-container.is-panning .cell {
-    cursor: grabbing;
+.map-viewport .grid-container,
+.map-viewport .cell {
+    cursor: default;
+}
+
+body.is-panning,
+body.is-panning * {
+    cursor: grabbing !important;
+    user-select: none;
 }

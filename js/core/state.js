@@ -1,3 +1,53 @@
+function createDefaultUnlocks() {
+    return {
+        paint: false,
+        packager: false,
+        stopper: false,
+        newProducer: false,
+        jumper: false
+    };
+}
+
+function resetGameState() {
+    state.grid = [];
+    state.items = [];
+    state.money = 0;
+    state.moneyRate = 0;
+    state.moneyRateEarnings = 0;
+    state.moneyRateHistory = [];
+    state.speedMultiplier = 1.0;
+    state.speedUpgradeCost = 100;
+    state.tool = 'belt';
+    state.toolData = {};
+    state.subTool = null;
+    state.rotation = 0;
+    state.lastTick = 0;
+    state.timeAcc = 0;
+    state.nextId = 0;
+    state.colorManager = null;
+    state.producerTypes = [];
+    state.usedIcons = new Set();
+    state.selectedProducerType = 0;
+    state.cols = 5;
+    state.rows = 5;
+    state.cellSize = 60;
+    state.gapSize = 1;
+    state.expansions = 0;
+    state.newProducerPurchases = 0;
+    state.placementCounts = {};
+    state.zoomLevel = 1.0;
+    state.stoppedItems = new Map();
+    state.unlocks = createDefaultUnlocks();
+    state.unlockedColors = new Set();
+    state.gameMode = 'single';
+    state.players = [];
+    state.localPlayerId = null;
+    state.isHost = false;
+    state.hostSeed = null;
+    delete state._pendingGrid;
+    delete state._pendingItems;
+}
+
 let state = {
     grid: [],      // { type, rotation, color: {r,g,b}, producerType }
     items: [],     // { id, x, y, ..., color: {r,g,b} }
@@ -28,6 +78,8 @@ let state = {
     cellSize: 60,
     gapSize: 1,
     expansions: 0, // Track expansion count for cost scaling
+    newProducerPurchases: 0,
+    placementCounts: {},
 
     // Zoom
     zoomLevel: 1.0,
@@ -39,13 +91,7 @@ let state = {
     stoppedItems: new Map(), // Map<itemId, { ticksRemaining: number }>
 
     // Unlock progression system
-    unlocks: {
-        paint: false,
-        packager: false,
-        stopper: false,
-        newProducer: false,
-        jumper: false
-    },
+    unlocks: createDefaultUnlocks(),
     unlockedColors: new Set(), // Track which color IDs have been unlocked for painting
 
     // Multiplayer state

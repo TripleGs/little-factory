@@ -1,29 +1,19 @@
 /* Responsiveness */
-@media (max-height: 800px) {
-    header p {
-        display: none;
-    }
-
-    .game-wrapper {
-        transform: scale(0.85);
-        transform-origin: top center;
-    }
-}
-
-@media (max-height: 600px) {
-    .game-wrapper {
-        transform: scale(0.7);
-    }
-}
-
 @media (max-width: 900px) {
+    .app-container {
+        overflow: auto;
+    }
+
     .game-main-area {
         flex-direction: column;
         align-items: center;
+        overflow: visible;
     }
 
-    .game-wrapper {
+    .map-viewport {
         order: 1;
+        width: 100%;
+        min-height: 55vh;
     }
 
     .player-sidebar {

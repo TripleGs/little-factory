@@ -93,7 +93,7 @@ const GameRoom = {
             return;
         }
 
-        player.money = this.lateJoinMoney;
+        setPlayerMoney(player, this.lateJoinMoney);
         player.connected = true;
         player.isHost = false;
 
@@ -127,6 +127,7 @@ const GameRoom = {
 
     // Create a new game room (host)
     async createRoom(playerName) {
+        resetGameState();
         this.isHost = true;
         this.roomCode = this.generateRoomCode();
 
@@ -154,14 +155,18 @@ const GameRoom = {
             emote: null,
             isHost: true,
             connected: true,
-            startingIcon: startingIcon
+            startingIcon: startingIcon,
+            progression: createEmptyProgression()
         }];
+
+        syncLocalProgressionToPlayerRecord();
 
         return this.roomCode;
     },
 
     // Join an existing room
     async joinRoom(roomCode, playerName) {
+        resetGameState();
         this.roomCode = roomCode.toUpperCase();
         this.isHost = false;
 
@@ -202,8 +207,11 @@ const GameRoom = {
             emote: null,
             isHost: false,
             connected: true,
-            startingIcon: startingIcon
+            startingIcon: startingIcon,
+            progression: createEmptyProgression()
         }];
+
+        syncLocalProgressionToPlayerRecord();
 
         // Send join message to host
         PeerManager.sendToHost({
@@ -260,15 +268,12 @@ const GameRoom = {
         if (leavingMoney > 0 && state.players.length > 0) {
             const share = leavingMoney / state.players.length;
             state.players.forEach(p => {
-                p.money = (p.money || 0) + share;
+                setPlayerMoney(p, (p.money || 0) + share);
             });
 
             const localPlayer = state.players.find(p => p.id === state.localPlayerId);
             if (localPlayer) {
-                state.money = localPlayer.money;
-                if (els.money) {
-                    els.money.innerText = Math.floor(state.money);
-                }
+                setMoney(localPlayer.money);
                 spawnFloatingText(Math.floor(state.cols / 2), Math.floor(state.rows / 2), `Inherited $${share.toFixed(1)}`);
             }
 
@@ -453,7 +458,7 @@ const GameRoom = {
         // Distribute starting money
         const startingMoney = COLOR_CONFIG.starting.money;
         state.players.forEach(player => {
-            player.money = startingMoney;
+            setPlayerMoney(player, startingMoney);
         });
 
         // Send full state to all connected peers
@@ -520,7 +525,7 @@ const GameRoom = {
     updatePlayerMoney(playerId, amount) {
         const player = state.players.find(p => p.id === playerId);
         if (player) {
-            player.money = amount;
+            setPlayerMoney(player, amount);
         }
     },
 

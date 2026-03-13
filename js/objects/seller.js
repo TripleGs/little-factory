@@ -12,15 +12,8 @@ function sellItem(x, y, item) {
         const splitAmount = totalMoney / state.players.length;
 
         // Add to local player's money (state.money is the source of truth)
-        state.money += splitAmount;
+        setMoney(state.money + splitAmount);
         state.moneyRateEarnings += splitAmount;
-        els.money.innerText = Math.floor(state.money);
-
-        // Update our entry in the players array
-        const localPlayer = state.players.find(p => p.id === state.localPlayerId);
-        if (localPlayer) {
-            localPlayer.money = state.money;
-        }
 
         // Show floating text with split indicator
         spawnFloatingText(x, y, `+$${totalMoney.toFixed(1)} (split)`);
@@ -32,17 +25,9 @@ function sellItem(x, y, item) {
         Sync.broadcastMoneyUpdate();
     } else {
         // Single player - original logic
-        state.money += totalMoney;
+        setMoney(state.money + totalMoney);
         state.moneyRateEarnings += totalMoney;
-        els.money.innerText = state.money;
         spawnFloatingText(x, y, `+$${totalMoney.toFixed(1)}`);
-    }
-
-    // Track income for stats menu
-    if (typeof Stats !== 'undefined') {
-        const producerType = item.producerType ?? 0;
-        const earnedAmount = state.gameMode === 'multi' && state.players.length > 1 ? totalMoney / state.players.length : totalMoney;
-        Stats.trackIncome(producerType, earnedAmount);
     }
 
     Sound.play('sell');

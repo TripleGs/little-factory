@@ -591,33 +591,6 @@
     border-color: var(--ink-black);
 }
 
-/* Multiplayer Header Display */
-.multiplayer-stats {
-    display: flex;
-    gap: 20px;
-    margin-left: 20px;
-}
-
-.player-money-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 5px 12px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-}
-
-.player-money-color {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    border: 1px solid rgba(255, 255, 255, 0.5);
-}
-
-.player-money-name {
-    color: #aaa;
-    font-size: 0.9em;
-}
 
 .player-money-amount {
     color: #ffd700;

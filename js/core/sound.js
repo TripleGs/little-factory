@@ -7,6 +7,7 @@ const Sound = (() => {
     let enabled = true;
     let muted = false;
     let volume = 0.6;
+    const isFileProtocol = window.location.protocol === 'file:';
 
     // Pitch scaling for "combo" effects (Pentatonic C Major-ish ratios)
     const PITCH_SCALE = [1, 1.125, 1.25, 1.5, 1.66, 2.0];
@@ -14,12 +15,12 @@ const Sound = (() => {
     let lastActionTime = 0;
     const COMBO_RESET_MS = 600; // Time to reset pitch to base
 
-    // Keep original WAV sources for texture/complex sounds
+    // Only keep single texture variants; duplicate numbered files were removed.
     const textureSources = {
-        unlock: ['audio/unlock.wav', 'audio/unlock_2.wav'],
-        achievement: ['audio/achievement.wav', 'audio/achievement_2.wav'],
-        error: ['audio/error.wav', 'audio/error_2.wav'], // Fallback if synth error isn't preferred
-        sell: ['audio/sell.wav', 'audio/sell_2.wav', 'audio/sell_3.wav']
+        unlock: ['audio/unlock.wav'],
+        achievement: ['audio/achievement.wav'],
+        error: ['audio/error.wav'],
+        sell: ['audio/sell.wav']
     };
 
     // Buffer cache for wav files
@@ -43,6 +44,10 @@ const Sound = (() => {
     }
 
     async function loadBuffer(url) {
+        if (!context || isFileProtocol) {
+            return null;
+        }
+
         try {
             const response = await fetch(url);
             const arrayBuffer = await response.arrayBuffer();
@@ -54,6 +59,13 @@ const Sound = (() => {
     }
 
     function preloadTextures() {
+        if (isFileProtocol) {
+            Object.keys(textureSources).forEach((key) => {
+                buffers[key] = [];
+            });
+            return;
+        }
+
         Object.entries(textureSources).forEach(([key, urls]) => {
             buffers[key] = [];
             urls.forEach(async (url) => {
@@ -256,7 +268,7 @@ const Sound = (() => {
 
     // Play a wav buffer with random variations
     function playBuffer(key) {
-        if (!context || !buffers[key] || buffers[key].length === 0) return;
+        if (!context || !buffers[key] || buffers[key].length === 0) return false;
 
         // Pick random variant
         const variantBuffers = buffers[key];
@@ -271,6 +283,7 @@ const Sound = (() => {
 
         source.connect(masterGain);
         source.start(0);
+        return true;
     }
 
 
@@ -523,6 +536,16 @@ const Sound = (() => {
                 break;
             case 'click':
                 synthClick(pitchMult * 1.5); // Click usually needs to be higher
+                break;
+            case 'unlock':
+                if (!playBuffer('unlock')) {
+                    synthClick(pitchMult * 1.2);
+                }
+                break;
+            case 'achievement':
+                if (!playBuffer('achievement')) {
+                    synthSell(Math.max(1.1, pitchMult));
+                }
                 break;
             case 'erase':
                 synthCrunch();

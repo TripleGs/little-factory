@@ -5,7 +5,7 @@ function createExpansionButtons() {
     addRowBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
 
     addRowBtn.onmouseenter = (e) => {
-        const cost = 250 * (state.expansions + 1);
+        const cost = getExpansionCost();
         showTooltip(addRowBtn, `Add Row Bottom ($${cost})`);
         addRowBtn.style.zIndex = '100';
     };
@@ -27,7 +27,7 @@ function createExpansionButtons() {
     addRowTopBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
 
     addRowTopBtn.onmouseenter = (e) => {
-        const cost = 250 * (state.expansions + 1);
+        const cost = getExpansionCost();
         showTooltip(addRowTopBtn, `Add Row Top ($${cost})`);
         addRowTopBtn.style.zIndex = '100';
     };
@@ -49,7 +49,7 @@ function createExpansionButtons() {
     addColBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
 
     addColBtn.onmouseenter = (e) => {
-        const cost = 250 * (state.expansions + 1);
+        const cost = getExpansionCost();
         showTooltip(addColBtn, `Add Col Right ($${cost})`);
         addColBtn.style.zIndex = '100';
     };
@@ -71,7 +71,7 @@ function createExpansionButtons() {
     addColLeftBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
 
     addColLeftBtn.onmouseenter = (e) => {
-        const cost = 250 * (state.expansions + 1);
+        const cost = getExpansionCost();
         showTooltip(addColLeftBtn, `Add Col Left ($${cost})`);
         addColLeftBtn.style.zIndex = '100';
     };
@@ -138,11 +138,11 @@ function applyGridExpansion(type) {
 }
 
 function expandGrid(type) {
-    const cost = 250 * (state.expansions + 1);
+    const cost = getExpansionCost();
     if (state.money >= cost) {
-        state.money -= cost;
-        els.money.innerText = state.money;
+        setMoney(state.money - cost);
         state.expansions++;
+        syncLocalProgressionToPlayerRecord();
         Sound.play('unlock');
         applyGridExpansion(type);
         spawnFloatingText(0, 0, "Expanded!");
@@ -156,7 +156,7 @@ function expandGrid(type) {
             if (localPlayer) {
                 localPlayer.money = state.money;
             }
-            Sync.broadcastGridExpanded(type);
+            Sync.broadcastGridExpanded(type, captureLocalProgression());
             Sync.broadcastMoneyUpdate();
             if (typeof Lobby !== 'undefined') {
                 Lobby.refreshMoneyDisplay();

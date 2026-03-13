@@ -1,15 +1,16 @@
 /* --- Window Sizing & Zoom --- */
 function calculateOptimalGridSize() {
-    // Get available space (window height minus header and controls)
+    // Get available space in the actual map viewport.
     const header = document.querySelector('header');
-    const controls = document.getElementById('controls-overlay');
+    const viewport = els.mapViewport || document.getElementById('map-viewport');
 
     const headerHeight = header ? header.offsetHeight : 60;
-    const controlsHeight = controls ? controls.offsetHeight : 100;
     const padding = 40; // Extra padding
 
-    const availableWidth = window.innerWidth - padding;
-    const availableHeight = window.innerHeight - headerHeight - controlsHeight - padding;
+    const availableWidth = viewport ? Math.max(0, viewport.clientWidth - padding) : window.innerWidth - padding;
+    const availableHeight = viewport
+        ? Math.max(0, viewport.clientHeight - padding)
+        : window.innerHeight - headerHeight - padding;
 
     // Calculate cell size that fits the grid
     const cellSizeByWidth = Math.floor(availableWidth / state.cols) - 1; // -1 for border
@@ -33,6 +34,9 @@ function applyZoom() {
     renderAllCells();
     if (state.gameMode === 'multi' && typeof Lobby !== 'undefined') {
         Lobby.restoreRemoteCursors();
+    }
+    if (typeof Pan !== 'undefined' && Pan.refresh) {
+        Pan.refresh();
     }
 
     showZoomIndicator();
@@ -105,6 +109,9 @@ function setupWindowResize() {
         renderAllCells();
         if (state.gameMode === 'multi' && typeof Lobby !== 'undefined') {
             Lobby.restoreRemoteCursors();
+        }
+        if (typeof Pan !== 'undefined' && Pan.refresh) {
+            Pan.refresh();
         }
     });
 }

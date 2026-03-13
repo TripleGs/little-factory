@@ -218,7 +218,8 @@ const Protocol = {
         // Find ourselves in the list and update money
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
         if (localPlayer) {
-            state.money = localPlayer.money;
+            setMoney(localPlayer.money);
+            ensurePlayerProgression(localPlayer.id);
         }
 
         // Apply initial state from host
@@ -285,10 +286,11 @@ const Protocol = {
         }
 
         // Update our money
-        state.money = yourMoney;
+        setMoney(yourMoney);
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
         if (localPlayer) {
-            localPlayer.money = yourMoney;
+            setPlayerMoney(localPlayer, yourMoney);
+            ensurePlayerProgression(localPlayer.id);
         }
 
         // Apply game state
@@ -340,11 +342,19 @@ const Protocol = {
         // Update the grid
         if (state.grid[y] && state.grid[y][x]) {
             const gridTile = state.grid[y][x];
+            if (gridTile.type && gridTile.placedBy === state.localPlayerId) {
+                decrementPlacementCount(gridTile);
+            }
+
             gridTile.type = tile.type;
             gridTile.rotation = tile.rotation;
-            gridTile.color = tile.color;
-            gridTile.producerType = tile.producerType;
-            gridTile.locked = tile.locked;
+            gridTile.color = tile.color ? { ...tile.color } : null;
+            gridTile.producerType = tile.producerType ?? null;
+            gridTile.locked = !!tile.locked;
+            gridTile.placedBy = playerId;
+            gridTile.cost = tile.cost ?? null;
+
+            state.items = state.items.filter((item) => item.x !== x || item.y !== y);
 
             renderCell(x, y, gridTile);
         }
@@ -358,11 +368,17 @@ const Protocol = {
 
         if (state.grid[y] && state.grid[y][x]) {
             const tile = state.grid[y][x];
+            if (tile.type && tile.placedBy === state.localPlayerId) {
+                decrementPlacementCount(tile);
+            }
+
             tile.type = null;
             tile.rotation = 0;
             tile.color = null;
             tile.producerType = null;
             tile.locked = false;
+            tile.placedBy = null;
+            tile.cost = null;
 
             // Remove items at this location
             state.items = state.items.filter(i => i.x !== x || i.y !== y);
@@ -377,14 +393,14 @@ const Protocol = {
     },
 
     handleGridExpanded(data) {
-        const { type, playerId } = data;
+        const { type, playerId, progression } = data;
 
         // Don't process our own expansion
         if (playerId === state.localPlayerId) return;
 
+        updatePlayerProgression(playerId, progression);
+
         // Apply the expansion without cost (cost was paid by the player who expanded)
-        // Increment expansion counter so cost scales for everyone
-        state.expansions++;
 
         if (typeof applyGridExpansion === 'function') {
             applyGridExpansion(type);
@@ -458,6 +474,8 @@ const Protocol = {
 
     handleUnlockUpdate(data) {
         if (!data) return;
+
+        updatePlayerProgression(data.playerId, data.progression);
 
         if (data.unlocks) {
             Object.keys(data.unlocks).forEach((key) => {
@@ -556,7 +574,14 @@ const Protocol = {
     handleFullState(data) {
         // Used for late joiners or resync
         if (data.grid) {
+            if (data.cols !== undefined) {
+                state.cols = data.cols;
+            }
+            if (data.rows !== undefined) {
+                state.rows = data.rows;
+            }
             state.grid = data.grid;
+            setupGrid(true);
             // Re-render entire grid
             for (let y = 0; y < state.rows; y++) {
                 for (let x = 0; x < state.cols; x++) {
@@ -609,6 +634,8 @@ const Protocol = {
             state.items = data.items;
         }
 
+        restoreLocalEconomyProgression();
+        updateSpeedButtonLabel();
         renderPalette();
         renderSubPalette();
     }

@@ -30,12 +30,17 @@ function handleEraser(x, y, tile) {
         return;
     }
 
-    // Refund half of what was paid for the tile
-    if (tile.cost && tile.cost > 0) {
+    const ownsTile = !tile.placedBy || tile.placedBy === state.localPlayerId;
+
+    if (ownsTile) {
+        decrementPlacementCount(tile);
+    }
+
+    // Refund half of what was paid for the tile, but only to the owner.
+    if (ownsTile && tile.cost && tile.cost > 0) {
         const refund = Math.floor(tile.cost / 2);
         if (refund > 0) {
-            state.money += refund;
-            els.money.innerText = state.money;
+            setMoney(state.money + refund);
             spawnFloatingText(x, y, `+$${refund}`);
 
             // Update multiplayer money
@@ -53,6 +58,7 @@ function handleEraser(x, y, tile) {
     }
 
     tile.type = null;
+    tile.placedBy = null;
     tile.rotation = 0;
     tile.color = null;
     tile.producerType = null;
@@ -95,8 +101,7 @@ function handlePlacement(x, y, tile) {
     }
 
     // Deduct cost and place tile
-    state.money -= cost;
-    els.money.innerText = state.money;
+    setMoney(state.money - cost);
 
     // Update local player's money in players array and broadcast
     if (state.gameMode === 'multi') {
@@ -110,15 +115,21 @@ function handlePlacement(x, y, tile) {
 
     // Auto-delete existing tile if any (no refund for overwriting)
     if (tile.type !== null) {
+        if (!tile.placedBy || tile.placedBy === state.localPlayerId) {
+            decrementPlacementCount(tile);
+        }
         tile.type = null;
+        tile.placedBy = null;
         tile.rotation = 0;
         tile.color = null;
         tile.producerType = null;
+        tile.locked = false;
         tile.cost = null;
         state.items = state.items.filter(i => i.x !== x || i.y !== y);
     }
 
     placeTile(tile, cost);
+    incrementPlacementCount(state.tool, tile);
     Sound.play('place');
 
 
@@ -136,6 +147,7 @@ function placeTile(tile, cost) {
 
     tile.type = toolData.type;
     tile.cost = cost || 0; // Store the cost paid for this tile
+    tile.placedBy = state.localPlayerId;
 
     // Sellers are never rotated
     if (toolData.type === 'seller') {
@@ -193,7 +205,9 @@ function setupControls() {
             state.toolData = {};
             state.subTool = null;
             document.querySelectorAll('#palette .tool-btn').forEach(b => b.classList.remove('active'));
-            els.subPalette.classList.remove('visible');
+            if (els.subPalette) {
+                els.subPalette.classList.remove('visible');
+            }
             clearPreview();
         } else if (e.key === 'r' || e.key === 'R') {
             // Rotate logic with checks

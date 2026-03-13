@@ -19,7 +19,8 @@ const Sync = {
                     rotation: tile.rotation,
                     color: tile.color,
                     producerType: tile.producerType,
-                    locked: tile.locked
+                    locked: tile.locked,
+                    cost: tile.cost
                 },
                 playerId: state.localPlayerId
             }
@@ -63,12 +64,13 @@ const Sync = {
     },
 
     // Broadcast grid expansion
-    broadcastGridExpanded(type) {
+    broadcastGridExpanded(type, progression) {
         this.broadcast({
             type: Protocol.types.GRID_EXPANDED,
             data: {
                 type: type,
-                playerId: state.localPlayerId
+                playerId: state.localPlayerId,
+                progression: progression
             }
         });
     },
@@ -93,7 +95,9 @@ const Sync = {
                 unlockedColors: Array.from(state.unlockedColors),
                 producerTypes: state.producerTypes,
                 usedIcons: Array.from(state.usedIcons),
-                expansions: state.expansions,
+                cols: state.cols,
+                rows: state.rows,
+                hostSeed: state.hostSeed,
                 speedMultiplier: state.speedMultiplier,
                 speedUpgradeCost: state.speedUpgradeCost
             }

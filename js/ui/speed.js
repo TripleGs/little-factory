@@ -4,7 +4,7 @@ function formatSpeedIcon(multiplier) {
 }
 
 function updateSpeedButtonLabel(buttonEl) {
-    const target = buttonEl || els.speedButton;
+    const target = buttonEl || document.getElementById('speed-button') || els.speedButton;
     if (!target) return;
 
     const iconEl = target.querySelector('.speed-icon');
@@ -42,8 +42,7 @@ function createSpeedUpgradeButton() {
             return;
         }
 
-        state.money -= state.speedUpgradeCost;
-        els.money.innerText = state.money;
+        setMoney(state.money - state.speedUpgradeCost);
         state.speedMultiplier = Math.round((state.speedMultiplier + 0.1) * 10) / 10;
         state.speedUpgradeCost *= 2;
 

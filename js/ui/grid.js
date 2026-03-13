@@ -51,7 +51,13 @@ function createCell(x, y) {
     cell.style.height = `${state.cellSize}px`;
 
     const interact = (e) => {
-        if (typeof Pan !== 'undefined' && Pan.isPanning && Pan.isPanning()) {
+        if (e && e.button !== undefined && e.button !== 0) {
+            return;
+        }
+        if (typeof Pan !== 'undefined' && (
+            (Pan.blocksGridInput && Pan.blocksGridInput()) ||
+            (Pan.isPanning && Pan.isPanning())
+        )) {
             return;
         }
         // Shift+click sends a suggestion instead of placing
@@ -61,7 +67,15 @@ function createCell(x, y) {
         }
         handleInput(x, y);
     };
-    cell.onmousedown = interact;
+    cell.onclick = (e) => {
+        if (typeof Pan !== 'undefined' && (
+            (Pan.consumeClick && Pan.consumeClick()) ||
+            (Pan.blocksGridInput && Pan.blocksGridInput())
+        )) {
+            return;
+        }
+        interact(e);
+    };
     cell.onmouseenter = (e) => { if (e.buttons === 1 && !e.shiftKey) interact(e); };
 
     els.grid.appendChild(cell);

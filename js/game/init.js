@@ -12,14 +12,12 @@ function initGame() {
 
     // Set starting money based on game mode
     if (state.gameMode === 'single') {
-        state.money = COLOR_CONFIG.starting.money;
+        setMoney(COLOR_CONFIG.starting.money);
     } else {
         // In multiplayer, money comes from player object
         const localPlayer = state.players.find(p => p.id === state.localPlayerId);
-        state.money = localPlayer ? localPlayer.money : COLOR_CONFIG.starting.money;
+        setMoney(localPlayer ? localPlayer.money : COLOR_CONFIG.starting.money);
     }
-
-    els.money.innerText = state.money;
 
     // Unlock starting colors (only if not already set by host)
     if (state.unlockedColors.size === 0) {
@@ -52,6 +50,13 @@ function initGame() {
         unlockNewProducer(startingIcon);
     }
 
+    if (state._pendingItems) {
+        state.items = state._pendingItems;
+        delete state._pendingItems;
+    }
+
+    restoreLocalEconomyProgression();
+
     renderPalette();
     setupControls();
     setupPaletteHoverBehavior();
@@ -62,16 +67,13 @@ function initGame() {
         Pan.init();
     }
 
-    // Initialize stats tracking
-    if (typeof Stats !== 'undefined') {
-        Stats.init();
-        Stats.reset();
-    }
-
 
 
     els.grid.appendChild(els.itemLayer);
     applyZoom();
+    if (typeof Pan !== 'undefined' && Pan.resetPosition) {
+        Pan.resetPosition();
+    }
     requestAnimationFrame(loop);
 }
 
