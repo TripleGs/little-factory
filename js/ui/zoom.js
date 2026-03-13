@@ -1,4 +1,7 @@
 /* --- Window Sizing & Zoom --- */
+let zoomControlsReady = false;
+let windowResizeReady = false;
+
 function calculateOptimalGridSize() {
     // Get available space in the actual map viewport.
     const header = document.querySelector('header');
@@ -81,6 +84,8 @@ function showZoomIndicator() {
 }
 
 function setupZoomControls() {
+    if (zoomControlsReady) return;
+
     document.addEventListener('keydown', (e) => {
         // Check for = or + (zoom in)
         if (e.key === '=' || e.key === '+') {
@@ -98,9 +103,13 @@ function setupZoomControls() {
             resetZoom();
         }
     });
+
+    zoomControlsReady = true;
 }
 
 function setupWindowResize() {
+    if (windowResizeReady) return;
+
     window.addEventListener('resize', () => {
         calculateOptimalGridSize();
         const baseSize = state.cellSize;
@@ -114,4 +123,6 @@ function setupWindowResize() {
             Pan.refresh();
         }
     });
+
+    windowResizeReady = true;
 }

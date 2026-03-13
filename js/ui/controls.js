@@ -1,5 +1,7 @@
 /* --- Interaction & Rendering --- */
 /* --- Input Handling --- */
+let controlsReady = false;
+
 function handleInput(x, y) {
     // Check for pending emote placement first (multiplayer only)
     if (state.gameMode === 'multi' && typeof Lobby !== 'undefined' && Lobby.pendingEmote) {
@@ -164,6 +166,11 @@ function placeTile(tile, cost) {
 }
 
 function setupControls() {
+    if (controlsReady) {
+        updatePreview();
+        return;
+    }
+
     // Rotate with right click
     els.grid.addEventListener('contextmenu', (e) => {
         e.preventDefault();
@@ -224,6 +231,8 @@ function setupControls() {
             if (btns[num - 1]) btns[num - 1].click();
         }
     });
+
+    controlsReady = true;
 }
 
 let lastPreviewCell = null;
