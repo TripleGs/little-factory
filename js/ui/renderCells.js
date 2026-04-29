@@ -4,20 +4,16 @@ function renderCell(x, y, tile) {
     if (!cell) return;
 
     cell.innerHTML = '';
-
-    if (!tile.type) return;
+    cell.style.color = '';
 
     if (tile.type === 'producer') {
         renderProducerCell(cell, tile);
-    } else {
+    } else if (tile.type) {
         renderStandardCell(cell, tile);
     }
 }
 
-function getSellerIconHtml(tile) {
-    if (tile && tile.producerType !== undefined && state.producerTypes[tile.producerType]) {
-        return state.producerTypes[tile.producerType].icon;
-    }
+function getSellerIconHtml() {
     return CONFIG.icons.seller;
 }
 
@@ -74,15 +70,12 @@ function renderStandardCell(cell, tile) {
 
     if (tile.type === 'seller') {
         // For product-specific sellers, show the producer icon at the bottom of the bin
-        const sellerIcon = getSellerIconHtml(tile);
-        obj.innerHTML = buildSellerMarkup(sellerIcon);
+        obj.innerHTML = buildSellerMarkup(getSellerIconHtml());
     }
 
     if (tile.type === 'colorer') {
         const colorStr = state.colorManager.formatColor(tile.color, 'rgb');
         cell.style.color = colorStr;
-    } else {
-        cell.style.color = '';
     }
 
     // Sellers should never be rotated

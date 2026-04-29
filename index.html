@@ -9,7 +9,32 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
     <!-- Local Styles -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/header.css">
+    <link rel="stylesheet" href="css/grid.css">
+    <link rel="stylesheet" href="css/objects/object-base.css">
+    <link rel="stylesheet" href="css/ui/preview.css">
+    <link rel="stylesheet" href="css/objects/color-classes.css">
+    <link rel="stylesheet" href="css/icons/belt-icon.css">
+    <link rel="stylesheet" href="css/objects/belt.css">
+    <link rel="stylesheet" href="css/objects/colorer.css">
+    <link rel="stylesheet" href="css/objects/jumper.css">
+    <link rel="stylesheet" href="css/objects/packager.css">
+    <link rel="stylesheet" href="css/objects/stopper.css">
+    <link rel="stylesheet" href="css/objects/producer.css">
+    <link rel="stylesheet" href="css/objects/seller.css">
+    <link rel="stylesheet" href="css/objects/items.css">
+    <link rel="stylesheet" href="css/ui/floating-text.css">
+    <link rel="stylesheet" href="css/ui/controls-overlay.css">
+    <link rel="stylesheet" href="css/ui/pan.css">
+    <link rel="stylesheet" href="css/ui/sub-palette.css">
+    <link rel="stylesheet" href="css/ui/palette.css">
+    <link rel="stylesheet" href="css/ui/tool-buttons.css">
+    <link rel="stylesheet" href="css/ui/expand-buttons.css">
+    <link rel="stylesheet" href="css/ui/zoom-indicator.css">
+    <link rel="stylesheet" href="css/ui/responsive.css">
+    <link rel="stylesheet" href="css/ui/menu.css">
 </head>
 
 <body>
@@ -23,12 +48,6 @@
                 <div class="menu-buttons">
                     <button id="btn-play" class="menu-btn primary">
                         <i class="fa-solid fa-play"></i> Play
-                    </button>
-                    <button id="btn-icon-shop" class="menu-btn secondary">
-                        <i class="fa-solid fa-gem"></i> Icon Shop
-                    </button>
-                    <button id="btn-achievements" class="menu-btn secondary">
-                        <i class="fa-solid fa-trophy"></i> Achievements
                     </button>
                 </div>
             </div>
@@ -142,61 +161,16 @@
                 </div>
             </div>
 
-            <!-- Icon Shop Screen -->
-            <div id="menu-shop" class="menu-screen">
-                <h2 class="menu-section-title"><i class="fa-solid fa-gem"></i> Icon Shop</h2>
-                <div class="menu-meta-bar">
-                    <div class="menu-currency">
-                        <i class="fa-solid fa-gem"></i>
-                        <span id="shop-diamond-count">0</span>
-                    </div>
-                    <div class="menu-starting-icon">
-                        <span class="menu-meta-label">Starting Icon</span>
-                        <span id="starting-icon-display" class="menu-icon-display"></span>
-                    </div>
-                </div>
-
-                <div id="icon-shop-grid" class="icon-shop-grid"></div>
-                <div class="menu-buttons">
-                    <button id="btn-shop-back" class="menu-btn back">
-                        <i class="fa-solid fa-arrow-left"></i> Back
-                    </button>
-                </div>
-            </div>
-
-            <!-- Achievements Screen -->
-            <div id="menu-achievements" class="menu-screen">
-                <h2 class="menu-section-title"><i class="fa-solid fa-trophy"></i> Achievements</h2>
-                <div id="achievement-list" class="achievement-list"></div>
-                <div class="menu-buttons">
-                    <button id="btn-achievements-back" class="menu-btn back">
-                        <i class="fa-solid fa-arrow-left"></i> Back
-                    </button>
-                </div>
-            </div>
-
             <!-- Settings Screen -->
             <div id="menu-settings" class="menu-screen">
                 <h2 class="menu-section-title"><i class="fa-solid fa-gear"></i> Settings</h2>
                 <div class="settings-list">
-                    <div class="settings-row">
-                        <div class="settings-label">Mute</div>
-                        <label class="settings-toggle">
-                            <input type="checkbox" id="setting-mute">
-                            <span class="settings-slider"></span>
-                        </label>
-                    </div>
                     <div class="settings-row">
                         <div class="settings-label">Floating Text</div>
                         <label class="settings-toggle">
                             <input type="checkbox" id="setting-floating-text">
                             <span class="settings-slider"></span>
                         </label>
-                    </div>
-                    <div class="settings-row">
-                        <div class="settings-label">Volume</div>
-                        <input type="range" id="setting-volume" min="0" max="100" value="60">
-                        <span id="setting-volume-label" class="settings-value">60%</span>
                     </div>
                 </div>
                 <div class="menu-buttons">
@@ -389,8 +363,9 @@
     <!-- PeerJS for WebRTC connections -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
-    <script src="colorConfig.js"></script>
-    <script src="colorSystem.js"></script>
+    <!-- Core (config, state, utilities) -->
+    <script src="js/core/colorConfig.js"></script>
+    <script src="js/core/colorSystem.js"></script>
     <script src="js/core/icons.js"></script>
     <script src="js/core/config.js"></script>
     <script src="js/core/dom.js"></script>
@@ -398,11 +373,11 @@
     <script src="js/core/baseTools.js"></script>
     <script src="js/core/factories.js"></script>
     <script src="js/core/utils.js"></script>
-    <script src="js/core/sound.js"></script>
     <script src="js/core/meta.js"></script>
-    <script src="js/core/achievements.js"></script>
     <script src="js/core/costs.js"></script>
     <script src="js/core/buttonUtils.js"></script>
+
+    <!-- Game objects -->
     <script src="js/objects/belt.js"></script>
     <script src="js/objects/jumper.js"></script>
     <script src="js/objects/stopper.js"></script>
@@ -410,6 +385,8 @@
     <script src="js/objects/colorer.js"></script>
     <script src="js/objects/seller.js"></script>
     <script src="js/objects/producer.js"></script>
+
+    <!-- UI -->
     <script src="js/ui/floatingText.js"></script>
     <script src="js/ui/tooltip.js"></script>
     <script src="js/ui/grid.js"></script>
@@ -422,17 +399,23 @@
     <script src="js/ui/renderItems.js"></script>
     <script src="js/ui/suggestions.js"></script>
     <script src="js/ui/controls.js"></script>
+
+    <!-- Game loop -->
     <script src="js/game/movement.js"></script>
     <script src="js/game/loop.js"></script>
-    <!-- Network/Multiplayer -->
+
+    <!-- Networking / multiplayer -->
     <script src="js/network/protocol.js"></script>
     <script src="js/network/peer-manager.js"></script>
     <script src="js/network/game-room.js"></script>
     <script src="js/network/sync.js"></script>
+
+    <!-- Menu / lobby / chat -->
     <script src="js/menu/lobby.js"></script>
     <script src="js/menu/chat.js"></script>
     <script src="js/menu/menu.js"></script>
-    <!-- Init must be last -->
+
+    <!-- Bootstrap (must run after all modules are defined) -->
     <script src="js/game/init.js"></script>
 </body>
 

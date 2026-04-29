@@ -279,27 +279,10 @@ function determineItemDirection(item, tile) {
         if (!item.onSeller) {
             item.onSeller = true; // First tick on seller
             return -1; // Don't move, stay visible
-        } else {
-            // Second tick on seller - sell or trash now
-            // Check if this is a product-specific seller
-            if (tile.producerType !== undefined) {
-                // For packages, check the first packaged item's type
-                const checkType = item.isPackaged && item.packagedItems.length > 0
-                    ? item.packagedItems[0].producerType
-                    : item.producerType;
-
-                if (checkType === tile.producerType) {
-                    sellItem(item.x, item.y, item);
-                } else {
-                    // Trash the item (no money)
-                    spawnFloatingText(item.x, item.y, "Trashed!");
-                }
-            } else {
-                // Generic seller accepts all
-                sellItem(item.x, item.y, item);
-            }
-            return -2; // Special value to indicate item should be removed
         }
+        // Second tick on seller - universal bin accepts every item type
+        sellItem(item.x, item.y, item);
+        return -2; // Special value to indicate item should be removed
     }
 
     return -1;

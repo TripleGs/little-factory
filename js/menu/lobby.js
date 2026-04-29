@@ -1,12 +1,3 @@
-/* --- Lobby System --- */
-function pickRandomStartingIcon(players) {
-    const icons = players
-        .map(player => player.startingIcon)
-        .filter(Boolean);
-    if (icons.length === 0) return null;
-    return icons[Math.floor(Math.random() * icons.length)];
-}
-
 const Lobby = {
     transferReady: false,
     emoteReady: false,
@@ -51,8 +42,8 @@ const Lobby = {
     },
 
     getPlayerDisplayIcon(player, fallbackIndex) {
-        if (player && player.startingIcon) {
-            return `<i class="${player.startingIcon}"></i>`;
+        if (player && player.displayIcon) {
+            return `<i class="fa-solid ${player.displayIcon}"></i>`;
         }
         return `<i class="fa-solid ${this.getPlayerIcon(fallbackIndex)}"></i>`;
     },
@@ -212,12 +203,7 @@ const Lobby = {
         setupGrid();
 
         // Initialize producer (this is where randomness happens)
-        if (state.gameMode === 'multi') {
-            const startingIcon = pickRandomStartingIcon(state.players);
-            unlockNewProducer(startingIcon);
-        } else {
-            unlockNewProducer();
-        }
+        unlockNewProducer();
     },
 
     // Called by host after initHostGame
@@ -244,9 +230,6 @@ const Lobby = {
         this.setupCursorTracking();
         this.updateMultiplayerUI();
 
-        if (state.gameMode === 'multi' && typeof Achievements !== 'undefined') {
-            Achievements.onMultiplayerStart();
-        }
     },
 
     // Called by joiner when receiving game_start
@@ -862,11 +845,6 @@ const Lobby = {
     },
 
     reset() {
-        // Stop all sounds when leaving game
-        if (window.Sound) {
-            Sound.stopAll();
-        }
-
         resetGameState();
         this.roomCodeCopyReady = false;
         this.sidebarToggleReady = false;

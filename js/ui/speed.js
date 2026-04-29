@@ -38,7 +38,6 @@ function createSpeedUpgradeButton() {
             const cx = Math.floor(state.cols / 2);
             const cy = Math.floor(state.rows / 2);
             spawnFloatingText(cx, cy, `Need $${state.speedUpgradeCost}!`);
-            Sound.play('error');
             return;
         }
 
@@ -47,7 +46,6 @@ function createSpeedUpgradeButton() {
         state.speedUpgradeCost *= 2;
 
         spawnFloatingText(Math.floor(state.cols / 2), Math.floor(state.rows / 2), `Speed ${formatSpeedIcon(state.speedMultiplier)}!`);
-        Sound.play('unlock');
         updateSpeedButtonLabel(btn);
 
         // Broadcast speed update to other players

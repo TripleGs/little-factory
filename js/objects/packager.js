@@ -57,7 +57,6 @@ function mergeIntoPackage(target, item) {
         target.packagedItems = [{ ...target }, item];
         target.packageCount = 2;
     }
-    Sound.play('package'); // Play package sound on merge/create
 }
 
 function handlePackaging(item, tile) {
@@ -80,5 +79,4 @@ function handlePackaging(item, tile) {
     item.isPackaged = true;
     item.packagedItems = [{ ...item }]; // Store original item data
     item.packageCount = 1;
-    Sound.play('package');
 }

@@ -12,6 +12,16 @@ const GameRoom = {
     joinRequestReady: false,
     lateJoinMoney: COLOR_CONFIG.starting.money,
     playerColors: ['#4CAF50', '#2196F3', '#FF9800', '#E91E63', '#9C27B0', '#00BCD4', '#FF5722', '#795548'],
+    playerDisplayIcons: [
+        'fa-user',
+        'fa-user-astronaut',
+        'fa-user-ninja',
+        'fa-user-secret',
+        'fa-user-tie',
+        'fa-ghost',
+        'fa-robot',
+        'fa-cat'
+    ],
 
     // Generate a simple room code
     generateRoomCode() {
@@ -21,6 +31,10 @@ const GameRoom = {
             code += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return code;
+    },
+
+    pickRandomPlayerDisplayIcon() {
+        return this.playerDisplayIcons[Math.floor(Math.random() * this.playerDisplayIcons.length)];
     },
 
     setupJoinRequestUI() {
@@ -138,7 +152,6 @@ const GameRoom = {
         PeerManager.roomCode = this.roomCode;
 
         const playerId = PeerManager.peerId;
-        const startingIcon = (typeof Meta !== 'undefined') ? Meta.getSelectedStartingIcon() : null;
         this.hostPeerId = playerId;
         PeerManager.hostPeerId = playerId;
 
@@ -155,7 +168,7 @@ const GameRoom = {
             emote: null,
             isHost: true,
             connected: true,
-            startingIcon: startingIcon,
+            displayIcon: this.pickRandomPlayerDisplayIcon(),
             progression: createEmptyProgression()
         }];
 
@@ -178,7 +191,6 @@ const GameRoom = {
         PeerManager.roomCode = this.roomCode;
 
         const playerId = PeerManager.peerId;
-        const startingIcon = (typeof Meta !== 'undefined') ? Meta.getSelectedStartingIcon() : null;
 
         // Set up local state
         state.gameMode = 'multi';
@@ -207,7 +219,7 @@ const GameRoom = {
             emote: null,
             isHost: false,
             connected: true,
-            startingIcon: startingIcon,
+            displayIcon: this.pickRandomPlayerDisplayIcon(),
             progression: createEmptyProgression()
         }];
 
@@ -425,12 +437,16 @@ const GameRoom = {
         if (player.emote === undefined) {
             player.emote = null;
         }
+        if (!player.displayIcon) {
+            player.displayIcon = this.pickRandomPlayerDisplayIcon();
+        }
 
         // Check if player already exists (reconnect)
         const existing = state.players.find(p => p.id === player.id);
         if (existing) {
             existing.connected = true;
             existing.peerId = player.peerId;
+            existing.displayIcon = existing.displayIcon || player.displayIcon;
         } else {
             state.players.push(player);
         }

@@ -346,6 +346,11 @@ const Protocol = {
                 decrementPlacementCount(gridTile);
             }
 
+            if (gridTile.type) {
+                clearTileObjectHistory(x, y, gridTile.type);
+                removeItemsAtLocation(x, y);
+            }
+
             gridTile.type = tile.type;
             gridTile.rotation = tile.rotation;
             gridTile.color = tile.color ? { ...tile.color } : null;
@@ -353,8 +358,6 @@ const Protocol = {
             gridTile.locked = !!tile.locked;
             gridTile.placedBy = playerId;
             gridTile.cost = tile.cost ?? null;
-
-            state.items = state.items.filter((item) => item.x !== x || item.y !== y);
 
             renderCell(x, y, gridTile);
         }
@@ -372,16 +375,9 @@ const Protocol = {
                 decrementPlacementCount(tile);
             }
 
-            tile.type = null;
-            tile.rotation = 0;
-            tile.color = null;
-            tile.producerType = null;
-            tile.locked = false;
-            tile.placedBy = null;
-            tile.cost = null;
-
-            // Remove items at this location
-            state.items = state.items.filter(i => i.x !== x || i.y !== y);
+            clearTileObjectHistory(x, y, tile.type);
+            removeItemsAtLocation(x, y);
+            resetTileState(tile);
 
             renderCell(x, y, tile);
         }
@@ -505,14 +501,6 @@ const Protocol = {
 
         if (Array.isArray(data.usedIcons)) {
             data.usedIcons.forEach((icon) => state.usedIcons.add(icon));
-        }
-
-        if (data.sellerPlacement && state.grid[data.sellerPlacement.y]) {
-            const { x, y, tile } = data.sellerPlacement;
-            if (state.grid[y] && state.grid[y][x]) {
-                state.grid[y][x] = tile;
-                renderCell(x, y, tile);
-            }
         }
 
         renderPalette();

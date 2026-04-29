@@ -203,16 +203,15 @@ function createBeltUnlockButton(unlockKey) {
 
     updateButtonAffordability(btn, cost, canAfford);
 
-    btn.onclick = (e) => {
-        e.stopPropagation();
-        if (state.money >= cost) {
-            setMoney(state.money - cost);
-            state.unlocks[unlockKey] = true;
-            spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${info.name}!`);
-            Sound.play('unlock');
-            renderSubPalette();
-            renderPalette();
-            if (state.gameMode === 'multi') {
+        btn.onclick = (e) => {
+            e.stopPropagation();
+            if (state.money >= cost) {
+                setMoney(state.money - cost);
+                state.unlocks[unlockKey] = true;
+                spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${info.name}!`);
+                renderSubPalette();
+                renderPalette();
+                if (state.gameMode === 'multi') {
                 const localPlayer = state.players.find(p => p.id === state.localPlayerId);
                 if (localPlayer) {
                     localPlayer.money = state.money;
@@ -252,7 +251,6 @@ function createBeltGroupButton(tool) {
 }
 
 function selectBeltTool(tool) {
-    Sound.play('click');
     state.tool = tool.id;
     state.toolData = tool;
 
@@ -322,7 +320,6 @@ function createColorButton(color) {
                 setMoney(state.money - unlockCost);
                 state.unlockedColors.add(color.id);
                 spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${color.name}!`);
-                Sound.play('unlock');
                 renderPalette();
                 if (state.gameMode === 'multi') {
                     const localPlayer = state.players.find(p => p.id === state.localPlayerId);
@@ -426,52 +423,34 @@ function createNewProducerButton() {
 
 
 function handleNewProducerPurchase(cost, iconClass) {
-    if (state.money >= cost) {
-        const spot = findEmptyCell();
-        if (!spot) {
-            const cx = Math.floor(state.cols / 2);
-            const cy = Math.floor(state.rows / 2);
-            spawnFloatingText(cx, cy, "Map is full can't place sale bin");
-            Sound.play('error');
-            return;
-        }
+    if (state.money < cost) return;
 
-        setMoney(state.money - cost);
-        state.newProducerPurchases++;
-        syncLocalProgressionToPlayerRecord();
-        const result = unlockNewProducer(iconClass);
-        const newType = result.type;
-        spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${newType.name}!`);
-        Sound.play('unlock');
-        if (typeof Achievements !== 'undefined') {
-            Achievements.onProducerPurchased();
-        }
-        renderSubPalette();
-        renderPalette();
+    setMoney(state.money - cost);
+    state.newProducerPurchases++;
+    syncLocalProgressionToPlayerRecord();
+    const { type: newType } = unlockNewProducer(iconClass);
+    spawnFloatingText(state.cols / 2, state.rows / 2, `Unlocked ${newType.name}!`);
+    renderSubPalette();
+    renderPalette();
 
-        if (state.gameMode === 'multi') {
-            const localPlayer = state.players.find(p => p.id === state.localPlayerId);
-            if (localPlayer) {
-                localPlayer.money = state.money;
-            }
-            Sync.broadcastMoneyUpdate();
-            Sync.broadcastUnlockState({
-                playerId: state.localPlayerId,
-                progression: captureLocalProgression(),
-                unlocks: state.unlocks,
-                unlockedColors: Array.from(state.unlockedColors),
-                producerTypes: state.producerTypes,
-                usedIcons: Array.from(state.usedIcons),
-                sellerPlacement: result.sellerPlacement
-            });
+    if (state.gameMode === 'multi') {
+        const localPlayer = state.players.find(p => p.id === state.localPlayerId);
+        if (localPlayer) {
+            localPlayer.money = state.money;
         }
-    } else {
-        Sound.play('error');
+        Sync.broadcastMoneyUpdate();
+        Sync.broadcastUnlockState({
+            playerId: state.localPlayerId,
+            progression: captureLocalProgression(),
+            unlocks: state.unlocks,
+            unlockedColors: Array.from(state.unlockedColors),
+            producerTypes: state.producerTypes,
+            usedIcons: Array.from(state.usedIcons)
+        });
     }
 }
 
 function selectTool(tool, btnEl) {
-    Sound.play('click');
     // For belt button, preserve current belt tool selection if one exists
     if (tool.id === 'belt' && BELT_TOOLS.includes(state.tool)) {
         // Keep current belt tool selected, just show popup
@@ -503,7 +482,6 @@ function selectTool(tool, btnEl) {
 }
 
 function selectPaintColor(colorObj) {
-    Sound.play('click');
     // Ensure paint tool is selected
     state.tool = 'paint';
     state.subTool = colorObj;
@@ -556,7 +534,6 @@ function createUnlockButton(unlockKey) {
             state.unlocks[unlockKey] = true;
 
             spawnFloatingText(state.cols / 2, state.rows / 2, `${info.name}!`);
-            Sound.play('unlock');
             renderPalette();
             if (state.gameMode === 'multi') {
                 const localPlayer = state.players.find(p => p.id === state.localPlayerId);

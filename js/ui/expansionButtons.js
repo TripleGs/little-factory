@@ -14,7 +14,6 @@ function createExpansionButtons() {
         addRowBtn.style.zIndex = '';
     };
     addRowBtn.onclick = () => {
-        Sound.play('click');
         hideTooltip();
         expandGrid('row-bottom');
     };
@@ -36,7 +35,6 @@ function createExpansionButtons() {
         addRowTopBtn.style.zIndex = '';
     };
     addRowTopBtn.onclick = () => {
-        Sound.play('click');
         hideTooltip();
         expandGrid('row-top');
     };
@@ -58,7 +56,6 @@ function createExpansionButtons() {
         addColBtn.style.zIndex = '';
     };
     addColBtn.onclick = () => {
-        Sound.play('click');
         hideTooltip();
         expandGrid('col-right');
     };
@@ -80,7 +77,6 @@ function createExpansionButtons() {
         addColLeftBtn.style.zIndex = '';
     };
     addColLeftBtn.onclick = () => {
-        Sound.play('click');
         hideTooltip();
         expandGrid('col-left');
     };
@@ -143,12 +139,8 @@ function expandGrid(type) {
         setMoney(state.money - cost);
         state.expansions++;
         syncLocalProgressionToPlayerRecord();
-        Sound.play('unlock');
         applyGridExpansion(type);
         spawnFloatingText(0, 0, "Expanded!");
-        if (typeof Achievements !== 'undefined') {
-            Achievements.onGridExpanded();
-        }
 
         // Broadcast expansion to other players in multiplayer
         if (state.gameMode === 'multi') {
@@ -168,6 +160,5 @@ function expandGrid(type) {
         const cx = Math.floor(state.cols / 2);
         const cy = Math.floor(state.rows / 2);
         spawnFloatingText(cx, cy, `Need $${cost}!`);
-        Sound.play('error');
     }
 }

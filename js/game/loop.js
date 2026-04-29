@@ -19,9 +19,6 @@ function tick() {
     spawnItemsFromProducers();
     moveAndProcessAllItems();
     updateMoneyRate();
-    if (window.Sound) {
-        Sound.updateConveyor(state.items.length);
-    }
 }
 
 function updateMoneyRate() {

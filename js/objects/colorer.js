@@ -23,7 +23,6 @@ function handleColorMixing(item, tile) {
     item.mixLevel = newMixLevel;
     // item.pendingOldColor = oldColor; // No longer needed for diff
     item.colorChangeApplied = true;
-    Sound.play('paint');
 
     // Check for color discovery immediately
     if (hasColorChanged(oldColor, newColor)) {

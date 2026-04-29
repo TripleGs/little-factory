@@ -2,6 +2,61 @@
 /* --- Input Handling --- */
 let controlsReady = false;
 
+function clearTileObjectHistory(x, y, tileType) {
+    const historyKey = `${x},${y}`;
+
+    state.items.forEach(item => {
+        if (item.paintedBy) {
+            item.paintedBy.delete(historyKey);
+        }
+        if (item.packagedBy) {
+            item.packagedBy.delete(historyKey);
+        }
+        if (item.visitedPositions) {
+            item.visitedPositions.delete(historyKey);
+        }
+        if (tileType === 'seller' && item.x === x && item.y === y) {
+            item.onSeller = false;
+        }
+    });
+
+    if (tileType === 'stopper') {
+        state.stoppedItems.forEach((stopData, itemId) => {
+            if (stopData && stopData.x === x && stopData.y === y) {
+                state.stoppedItems.delete(itemId);
+            }
+        });
+    }
+}
+
+function removeItemsAtLocation(x, y) {
+    const removedItemIds = [];
+
+    state.items = state.items.filter(item => {
+        const shouldRemove = item.x === x && item.y === y;
+        if (shouldRemove) {
+            removedItemIds.push(item.id);
+        }
+        return !shouldRemove;
+    });
+
+    removedItemIds.forEach(itemId => {
+        state.stoppedItems.delete(itemId);
+    });
+}
+
+function resetTileState(tile) {
+    if (!tile) return;
+
+    tile.type = null;
+    tile.placedBy = null;
+    tile.rotation = 0;
+    tile.color = null;
+    tile.producerType = null;
+    tile.locked = false;
+    tile.cost = null;
+}
+
 function handleInput(x, y) {
     // Check for pending emote placement first (multiplayer only)
     if (state.gameMode === 'multi' && typeof Lobby !== 'undefined' && Lobby.pendingEmote) {
@@ -28,7 +83,6 @@ function handleEraser(x, y, tile) {
     // Locked tiles cannot be erased
     if (tile.locked) {
         spawnFloatingText(x, y, "Locked!");
-        Sound.play('error');
         return;
     }
 
@@ -59,18 +113,9 @@ function handleEraser(x, y, tile) {
         }
     }
 
-    tile.type = null;
-    tile.placedBy = null;
-    tile.rotation = 0;
-    tile.color = null;
-    tile.producerType = null;
-    tile.locked = false;
-    tile.cost = null;
-
-    // Remove any items at this location
-    state.items = state.items.filter(i => i.x !== x || i.y !== y);
-
-    Sound.play('erase');
+    clearTileObjectHistory(x, y, tile.type);
+    removeItemsAtLocation(x, y);
+    resetTileState(tile);
 
     // Broadcast tile removal in multiplayer
     if (state.gameMode === 'multi') {
@@ -84,21 +129,18 @@ function handlePlacement(x, y, tile) {
     // Validate placement - paint tool requires a color to be selected
     if (state.tool === 'paint' && (!state.subTool || state.toolData.type !== 'colorer')) {
         spawnFloatingText(x, y, "Select a color!");
-        Sound.play('error');
         return;
     }
 
     // Locked tiles cannot be overwritten
     if (tile.locked) {
         spawnFloatingText(x, y, "Locked!");
-        Sound.play('error');
         return;
     }
 
     const cost = getToolCost(state.tool);
     if (cost > state.money) {
         spawnFloatingText(x, y, `Need $${cost}!`);
-        Sound.play('error');
         return;
     }
 
@@ -120,21 +162,13 @@ function handlePlacement(x, y, tile) {
         if (!tile.placedBy || tile.placedBy === state.localPlayerId) {
             decrementPlacementCount(tile);
         }
-        tile.type = null;
-        tile.placedBy = null;
-        tile.rotation = 0;
-        tile.color = null;
-        tile.producerType = null;
-        tile.locked = false;
-        tile.cost = null;
-        state.items = state.items.filter(i => i.x !== x || i.y !== y);
+        clearTileObjectHistory(x, y, tile.type);
+        removeItemsAtLocation(x, y);
+        resetTileState(tile);
     }
 
     placeTile(tile, cost);
     incrementPlacementCount(state.tool, tile);
-    Sound.play('place');
-
-
 
     // Broadcast tile placement in multiplayer
     if (state.gameMode === 'multi') {

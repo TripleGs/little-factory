@@ -1,3 +1,14 @@
+function spawnCenterSeller() {
+    const cx = Math.floor(state.cols / 2);
+    const cy = Math.floor(state.rows / 2);
+    if (!state.grid[cy] || !state.grid[cy][cx]) return null;
+
+    const tile = { type: 'seller', rotation: 0, locked: true };
+    state.grid[cy][cx] = tile;
+    renderCell(cx, cy, tile);
+    return { x: cx, y: cy, tile };
+}
+
 function sellItem(x, y, item) {
     // Base sell value of $1, plus 0.5 per mix level
     const sellMultiplier = item.isPackaged ? item.packageCount : 1;
@@ -30,9 +41,5 @@ function sellItem(x, y, item) {
         spawnFloatingText(x, y, `+$${totalMoney.toFixed(1)}`);
     }
 
-    Sound.play('sell');
-    if (typeof Achievements !== 'undefined') {
-        Achievements.onItemSold(state.money);
-    }
     renderPalette(); // Update affordability
 }

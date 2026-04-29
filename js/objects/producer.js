@@ -30,16 +30,6 @@ function shuffleArray(list) {
     return list;
 }
 
-function unlockStartingProducersForPlayers(players) {
-    const eligible = players.filter(player => player.connected !== false);
-    const shuffled = shuffleArray([...eligible]);
-
-    shuffled.forEach(player => {
-        const iconToUse = resolveStartingIcon(player.startingIcon);
-        unlockNewProducer(iconToUse);
-    });
-}
-
 function unlockNewProducer(iconClass) {
     const newIcon = resolveStartingIcon(iconClass);
     markIconUsed(newIcon);
@@ -51,42 +41,7 @@ function unlockNewProducer(iconClass) {
     state.producerTypes.push(newType);
     state.selectedProducerType = newType.id;
 
-    // Auto-spawn a locked seller for this producer type
-    const sellerPlacement = spawnLockedSeller(newType.id);
-
-    return { type: newType, sellerPlacement };
-}
-
-function spawnLockedSeller(producerTypeId) {
-    for (let y = 0; y < state.rows; y++) {
-        for (let x = 0; x < state.cols; x++) {
-            const tile = state.grid[y][x];
-            if (tile && tile.type === 'seller' && tile.producerType === producerTypeId) {
-                return { x, y, tile };
-            }
-        }
-    }
-
-    const spot = findEmptyCell();
-    if (!spot) {
-        // Grid is full, notify user
-        spawnFloatingText(Math.floor(state.cols / 2), Math.floor(state.rows / 2), 'No room for seller!');
-        return null;
-    }
-
-    const { x, y } = spot;
-    const tile = {
-        type: 'seller',
-        rotation: 0,
-        locked: true,
-        producerType: producerTypeId
-    };
-    state.grid[y][x] = tile;
-
-    renderCell(x, y, state.grid[y][x]);
-    spawnFloatingText(x, y, 'New Seller!');
-
-    return { x, y, tile };
+    return { type: newType };
 }
 
 function findEmptyCell() {
@@ -148,7 +103,6 @@ function spawnItem(px, py, list) {
             const newItem = createItem(tx, ty, itemIcon, producerTypeId);
             mergeIntoPackage(existingPackage, newItem);
             spawnFloatingText(tx, ty, `+1 (x${existingPackage.packageCount})`);
-            Sound.play('produce');
             return;
         } else {
             // Type mismatch - can't spawn
@@ -159,5 +113,4 @@ function spawnItem(px, py, list) {
     if (isLocationOccupied(tx, ty, state.items)) return;
 
     list.push(createItem(tx, ty, itemIcon, producerTypeId));
-    Sound.play('produce');
 }

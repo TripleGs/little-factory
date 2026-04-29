@@ -1,6 +1,6 @@
 const ICONS = {
     producer: '<i class="fa-solid fa-industry"></i>',
-    seller: '<i class="fa-solid fa-cart-shopping"></i>',
+    seller: '<i class="fa-solid fa-coins"></i>',
     item: '<i class="fa-solid fa-book-open"></i>',
     eraser: '<i class="fa-solid fa-eraser"></i>',
     belt: '<span class="belt-icon"></span>',
