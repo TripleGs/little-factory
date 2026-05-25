@@ -163,8 +163,18 @@ function getToolCost(toolId, options = {}) {
         return COLOR_CONFIG.palette.colorBaseCost;
     }
 
-    const baseCost = COLOR_CONFIG.costs[toolId] || 0;
+    let baseCost = COLOR_CONFIG.costs[toolId] || 0;
     if (baseCost === 0) return 0;
+
+    // Each producer type starts at 2x the previous type's base, independent
+    // of other producers' placement counts.
+    if (toolId === 'producer') {
+        const producerTypeId = options.producerTypeId
+            ?? options.tile?.producerType
+            ?? state.selectedProducerType
+            ?? 0;
+        baseCost = baseCost * Math.pow(2, producerTypeId);
+    }
 
     const key = getPlacementKey(toolId, options);
     const count = getPlacementCount(key);
